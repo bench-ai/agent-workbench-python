@@ -27,7 +27,7 @@ class Command:
 class BrowserCommand(Command):
     def __init__(self, command_name: str, params: dict[str, typing.Any]):
         super().__init__(
-            'config',
+            'browser',
             command_name,
             params
         )

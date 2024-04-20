@@ -1,6 +1,6 @@
 import json
 import typing
-from command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
+from src.config.command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
 
 
 class Operations(list):
@@ -23,7 +23,7 @@ class Operations(list):
         if command.command_type == self.op_type:
             super().append(command)
         else:
-            raise Exception(f"cannot append command of type {self.op_type}")
+            raise Exception(f"cannot append command of type {command.command_type}")
 
     def get_settings(self) -> dict:
         return {"timeout": self.timeout} if self.timeout else {}
@@ -46,7 +46,7 @@ class BrowserOperations(Operations):
     def __init__(self,
                  headless: bool = False,
                  timeout=None | int):
-        super().__init__("config", timeout)
+        super().__init__("browser", timeout)
 
         self.headless = headless
 
@@ -79,3 +79,5 @@ class BrowserOperations(Operations):
                     raise Exception(f"{command['command_name']} is not a valid browser command")
 
             browser_opts.append(initialized_command)
+
+        return browser_opts

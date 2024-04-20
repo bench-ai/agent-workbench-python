@@ -1,6 +1,11 @@
+import base64
 import json
 import subprocess
-from config.operations import Operations, BrowserOperations
+from src.config.operations import Operations, BrowserOperations
+
+
+class CliError(Exception):
+    pass
 
 
 def load_config(config_path: str) -> list[Operations]:
@@ -48,22 +53,25 @@ class Agent:
         else:
             raise ValueError("Agent CLI not found")
 
-    def run(self, is_json_string=False, verbose=False) -> str:
-        command_list = ["config", "run"]
+    def run(self, verbose=False) -> str:
+        command_list = ["agent", "run"]
 
         config = []
         for operation in self.config:
             config.append(operation.to_dict())
 
-        if is_json_string:
-            command_list.append("-j")
-            config = json.dumps(config)
+        command_list.append("-b")
+        config = json.dumps({"operations": config})
 
-        command_list.append(config)
+        b64 = base64.b64encode(config.encode('ascii')).decode('utf-8')
+        command_list.append(b64)
 
-        console_out: str = subprocess.run(command_list, capture_output=True, text=True).stdout
+        console_out = subprocess.run(command_list, capture_output=True, text=True)
+
+        if console_out.stderr != "":
+            raise CliError(console_out.stderr)
 
         if verbose:
-            print(console_out)
+            print(console_out.stdout)
 
-        return console_out
+        return console_out.stdout

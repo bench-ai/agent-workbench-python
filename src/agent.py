@@ -1,21 +1,29 @@
 import json
 import subprocess
-from config.operations import Operations
+from config.operations import Operations, BrowserOperations
 
 
-def load_json(config_path) -> list[Operations]:
+def load_config(config_path: str) -> list[Operations]:
     with open(config_path, "r") as f:
         data = json.load(f)
 
         operations = data["operations"]
 
+        browser_list = []
+
+        for opt in operations:
+            match opt["type"]:
+                case "browser":
+                    browser_list.append(BrowserOperations.load(opt))
+                case _:
+                    raise Exception(f"{opt['type']} is not a valid operation type")
+
+        return browser_list
+
+
 class Agent:
 
     def __init__(self, config: list[Operations]):
-
-        '''
-        TODO: Accept from path
-        '''
         self.config = config
 
     @classmethod
@@ -42,6 +50,10 @@ class Agent:
 
     def run(self, is_json_string=False, verbose=False) -> str:
         command_list = ["config", "run"]
+
+        config = []
+        for operation in self.config:
+            config.append(operation.to_dict())
 
         if is_json_string:
             command_list.append("-j")

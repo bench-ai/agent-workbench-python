@@ -1,5 +1,6 @@
 import json
 import typing
+import os
 
 
 class Command:
@@ -44,6 +45,193 @@ class Navigate(BrowserCommand):
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
         return cls(command_dict["params"]["url"])
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        command_dict = json.loads(command)
+        return Navigate.init_from_dict(command_dict)
+
+
+class BrowserFile(BrowserCommand):
+    def __init__(self, command_name: str, params: dict, file_name: str, snap_shot_name: str):
+        self.file_name = file_name
+        self.snap_shot_name = snap_shot_name
+
+        params["snap_shot_name"] = snap_shot_name
+
+        super().__init__(
+            command_name,
+            params
+        )
+
+    @property
+    def image_path(self) -> str:
+        return os.path.join("./resources", self.snap_shot_name, self.file_name)
+
+    @property
+    def exists(self):
+        return os.path.exists(self.image_path)
+
+
+class FullPageScreenshot(BrowserFile):
+    def __init__(self, quality: int, name: str, snap_shot_name: str):
+        super().__init__(
+            "full_page_screenshot",
+            {
+                "quality": quality,
+                "name": name,
+            },
+            name,
+            snap_shot_name
+        )
+
+        self.quality = quality
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(
+            command_dict["params"]["quality"],
+            command_dict["params"]["name"],
+            command_dict["params"]["snap_shot_name"],
+        )
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        command_dict = json.loads(command)
+        return Navigate.init_from_dict(command_dict)
+
+
+class ElementScreenShot(BrowserFile):
+
+    def __init__(self, scale: int, selector: str, name: str, snap_shot_name: str):
+        super().__init__(
+            "element_screenshot",
+            {
+                "scale": scale,
+                "name": name,
+                "selector": selector,
+                "snap_shot_name": snap_shot_name
+            },
+            name,
+            snap_shot_name
+        )
+
+        self.scale = scale
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(
+            command_dict["params"]["scale"],
+            command_dict["params"]["selector"],
+            command_dict["params"]["name"],
+            command_dict["params"]["snap_shot_name"],
+        )
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        command_dict = json.loads(command)
+        return Navigate.init_from_dict(command_dict)
+
+
+class CollectNodes(BrowserFile):
+
+    def __init__(self, selector: str, snap_shot_name: str, wait_ready=False):
+        super().__init__(
+            "collect_nodes",
+            {
+                "wait_ready": wait_ready,
+                "selector": selector,
+                "snap_shot_name": snap_shot_name
+            },
+            "nodeData.json",
+            snap_shot_name
+        )
+
+        self.wait_ready = wait_ready
+        self.selector = selector
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(
+            command_dict["params"]["selector"],
+            command_dict["params"]["snap_shot_name"],
+            command_dict["params"]["wait_ready"],
+        )
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        command_dict = json.loads(command)
+        return Navigate.init_from_dict(command_dict)
+
+
+class SaveHtml(BrowserFile):
+
+    def __init__(self, snap_shot_name: str):
+        super().__init__(
+            "save_html",
+            {
+                "snap_shot_name": snap_shot_name
+            },
+            "body.txt",
+            snap_shot_name
+        )
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(
+            command_dict["params"]["snap_shot_name"]
+        )
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        command_dict = json.loads(command)
+        return Navigate.init_from_dict(command_dict)
+
+
+class Sleep(BrowserCommand):
+
+    def __init__(self, seconds: int):
+        super().__init__(
+            "sleep",
+            {
+                "seconds": seconds
+            }
+        )
+
+        self.seconds = seconds
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(
+            command_dict["params"]["seconds"]
+        )
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        command_dict = json.loads(command)
+        return Navigate.init_from_dict(command_dict)
+
+
+class Click(BrowserCommand):
+
+    def __init__(self, selector: str, query_type: str):
+        super().__init__(
+            "click",
+            {
+                "selector": selector,
+                "query_type": query_type
+            }
+        )
+
+        self.selector = selector
+        self.query_type = query_type
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(
+            command_dict["params"]["selector"],
+            command_dict["params"]["query_type"]
+        )
 
     @classmethod
     def init_from_json_string(cls, command: str):

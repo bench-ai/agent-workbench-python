@@ -1,6 +1,6 @@
 import json
 import typing
-from command import Command, Navigate
+from command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
 
 
 class Operations(list):
@@ -63,6 +63,18 @@ class BrowserOperations(Operations):
             match command["command_name"]:
                 case "open_web_page":
                     initialized_command = Navigate.init_from_dict(command)
+                case "full_page_screenshot":
+                    initialized_command = FullPageScreenshot.init_from_dict(command)
+                case "element_screenshot":
+                    initialized_command = ElementScreenShot.init_from_dict(command)
+                case "collect_nodes":
+                    initialized_command = CollectNodes.init_from_dict(command)
+                case "save_html":
+                    initialized_command = SaveHtml.init_from_dict(command)
+                case "sleep":
+                    initialized_command = Sleep.init_from_dict(command)
+                case "click":
+                    initialized_command = Click.init_from_dict(command)
                 case _:
                     raise Exception(f"{command['command_name']} is not a valid browser command")
 

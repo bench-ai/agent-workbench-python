@@ -9,6 +9,13 @@ class CliError(Exception):
 
 
 def load_config(config_path: str) -> list[Operations]:
+    """
+    converts a json file to a list of operations
+
+    :param config_path: path to the json file
+    :return: a list of operations
+    """
+
     with open(config_path, "r") as f:
         data = json.load(f)
 
@@ -27,8 +34,14 @@ def load_config(config_path: str) -> list[Operations]:
 
 
 class Agent:
+    """
+    Class based interface for the agent cli
+    """
 
     def __init__(self, config: list[Operations]):
+        """
+        :param config: The list of operations to execute
+        """
         self.config = config
 
     @classmethod
@@ -54,6 +67,12 @@ class Agent:
             raise ValueError("Agent CLI not found")
 
     def run(self, verbose=False) -> str:
+        """
+        Runs the config
+
+        :param verbose: print the stdout
+        :return: the stdout
+        """
         command_list = ["agent", "run"]
 
         config = []

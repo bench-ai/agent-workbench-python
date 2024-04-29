@@ -40,7 +40,8 @@ class Standard(LLMCommand):
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict)
+        return cls(command_dict["message_type"],
+                   command_dict["message"])
 
 class Multimodal(LLMCommand):
     def __init__(self, message:  dict[str, typing.Any]):
@@ -50,7 +51,8 @@ class Multimodal(LLMCommand):
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict)
+        return cls(command_dict["message_type"],
+                   command_dict["message"])
 
 class Assistant(LLMCommand):
     def __init__(self, message:  dict[str, typing.Any]):
@@ -60,7 +62,8 @@ class Assistant(LLMCommand):
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict)
+        return cls(command_dict["message_type"],
+                   command_dict["message"])
 
 class Tool(LLMCommand):
     def __init__(self, message:  dict[str, typing.Any]):
@@ -70,7 +73,8 @@ class Tool(LLMCommand):
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict)
+        return cls(command_dict["message_type"],
+                   command_dict["message"])
 
 class BrowserCommand(Command):
     def __init__(self, command_name: str, params: dict[str, typing.Any]):

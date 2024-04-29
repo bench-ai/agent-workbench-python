@@ -24,6 +24,54 @@ class Command:
         return json.dumps(self.to_dict())
 
 
+class LLMCommand(Command):
+    def __init__(self, message_type: str, message: dict[str, typing.Any]):
+        super().__init__(
+            'llm',
+            message_type,
+            message
+        )
+
+class Standard(LLMCommand):
+    def __init__(self, message:  dict[str, typing.Any]):
+        super().__init__(
+            'standard', 
+            message)
+    
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(command_dict)
+
+class Multimodal(LLMCommand):
+    def __init__(self, message:  dict[str, typing.Any]):
+        super().__init__(
+            'multimodal', 
+            message)
+    
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(command_dict)
+
+class Assistant(LLMCommand):
+    def __init__(self, message:  dict[str, typing.Any]):
+        super().__init__(
+            'assistant', 
+            message)
+    
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(command_dict)
+
+class Tool(LLMCommand):
+    def __init__(self, message:  dict[str, typing.Any]):
+        super().__init__(
+            'tool', 
+            message)
+    
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        return cls(command_dict)
+
 class BrowserCommand(Command):
     def __init__(self, command_name: str, params: dict[str, typing.Any]):
         super().__init__(

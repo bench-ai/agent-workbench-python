@@ -1,6 +1,7 @@
 import json
 import typing
 import os
+from typing import Union
 
 
 class Command:
@@ -23,7 +24,7 @@ class Command:
     def to_json_string(self):
         return json.dumps(self.to_dict())
 
-
+#################################### LLM Commands ####################################
 class LLMCommand(Command):
     def __init__(self, message_type: str, message: dict[str, typing.Any]):
         super().__init__(
@@ -33,37 +34,74 @@ class LLMCommand(Command):
         )
 
 class Standard(LLMCommand):
-    def __init__(self, message:  dict[str, typing.Any]):
+    def __init__(self, role: Union[str, None] = None, content: Union[str, None] = None):
         super().__init__(
             'standard', 
-            message)
+            {"role": role,
+             "content": content})
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict["message_type"],
-                   command_dict["message"])
+        return cls(command_dict["message"]["role"],
+                   command_dict["message"]["content"])
+    
+    def set_role(self, role: str):
+        self.message["role"] = role
+    
+    def set_content(self, content: str):
+        self.message["content"] = content
 
 class Multimodal(LLMCommand):
-    def __init__(self, message:  dict[str, typing.Any]):
+    def __init__(self,role: Union[str, None] = None, content: Union[list[dict], None] = None):
         super().__init__(
             'multimodal', 
-            message)
+            {"role": role,
+             "content": content if content is not None else []})
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict["message_type"],
-                   command_dict["message"])
+        return cls(command_dict["message"]["role"],
+                   command_dict["message"]["content"])
+    
+    def set_role(self, role: str):
+        self.message["role"] = role
+
+    def addContent(self, type: str, content: str):
+        """
+        Example usage:
+        multimodal_command = Multimodal(role="user")
+
+        multimodal_command.addContent("text", "This is some text.")
+        multimodal_command.addContent("image_url", "https://example.com/image.jpg")
+        """
+        if type == "text":
+            content_item = {"type": type, "text": content}
+        elif type == "image_url":
+            content_item = {"type": type, "image_url": content}
+        else:
+            raise ValueError("Invalid content type. Type must be 'text' or 'image_url'.")
+        
+        self.message["content"].append(content_item)
+    
+
 
 class Assistant(LLMCommand):
-    def __init__(self, message:  dict[str, typing.Any]):
+    def __init__(self, role: Union[str, None] = None, content: Union[str, None] = None):
         super().__init__(
-            'assistant', 
-            message)
+            'standard', 
+            {"role": role,
+             "content": content})
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict["message_type"],
-                   command_dict["message"])
+        return cls(command_dict["message"]["role"],
+                   command_dict["message"]["content"])
+    
+    def set_role(self, role: str):
+        self.message["role"] = role
+    
+    def set_content(self, content: str):
+        self.message["content"] = content
 
 class Tool(LLMCommand):
     def __init__(self, message:  dict[str, typing.Any]):
@@ -73,9 +111,10 @@ class Tool(LLMCommand):
     
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict["message_type"],
-                   command_dict["message"])
+        return cls(command_dict["message"])
 
+
+#################################### Browser Commands ####################################
 class BrowserCommand(Command):
     def __init__(self, command_name: str, params: dict[str, typing.Any]):
         super().__init__(

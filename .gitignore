@@ -4,8 +4,5 @@ __pycache__/
 .DS_Store
 config.json
 resources
-<<<<<<< HEAD
 demo.py
-=======
 localResources
->>>>>>> 66c8bcdca41bbc8c4254b3ded093c162ed48fea4

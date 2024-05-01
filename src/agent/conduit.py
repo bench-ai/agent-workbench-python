@@ -1,11 +1,6 @@
-import base64
 import json
 import subprocess
-<<<<<<< HEAD:src/agent.py
-from src.config.operations import Operations, BrowserOperations, LLMOperations
-=======
-from .config.operations import Operations, BrowserOperations
->>>>>>> 66c8bcdca41bbc8c4254b3ded093c162ed48fea4:src/agent/conduit.py
+from .config.operations import Operations, BrowserOperations, LLMOperations
 
 
 class CliError(Exception):

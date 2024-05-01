@@ -1,7 +1,11 @@
 import base64
 import json
 import subprocess
+<<<<<<< HEAD:src/agent.py
 from src.config.operations import Operations, BrowserOperations, LLMOperations
+=======
+from .config.operations import Operations, BrowserOperations
+>>>>>>> 66c8bcdca41bbc8c4254b3ded093c162ed48fea4:src/agent/conduit.py
 
 
 class CliError(Exception):
@@ -9,6 +13,13 @@ class CliError(Exception):
 
 
 def load_config(config_path: str) -> list[Operations]:
+    """
+    converts a json file to a list of operations
+
+    :param config_path: path to the json file
+    :return: a list of operations
+    """
+
     with open(config_path, "r") as f:
         data = json.load(f)
 
@@ -30,9 +41,15 @@ def load_config(config_path: str) -> list[Operations]:
         return op_list
 
 
-class Agent:
+class Conduit:
+    """
+    Class based interface for the agent cli
+    """
 
     def __init__(self, config: list[Operations]):
+        """
+        :param config: The list of operations to execute
+        """
         self.config = config
 
     @classmethod
@@ -58,18 +75,22 @@ class Agent:
             raise ValueError("Agent CLI not found")
 
     def run(self, verbose=False) -> str:
+        """
+        Runs the config
+
+        :param verbose: print the stdout
+        :return: the stdout
+        """
         command_list = ["agent", "run"]
 
         config = []
         for operation in self.config:
             config.append(operation.to_dict())
 
-        command_list.append("-b")
-        config = json.dumps({"operations": config})
+        with open("./temp-config.json", "w") as f:
+            json.dump({"operations": config}, f)
 
-        b64 = base64.b64encode(config.encode('ascii')).decode('utf-8')
-        command_list.append(b64)
-
+        command_list.append("./temp-config.json")
         console_out = subprocess.run(command_list, capture_output=True, text=True)
 
         if console_out.stderr != "":

@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "agent"
+version = "0.0.0"
+description = "python wrapper for bench ai agent cli"
+authors = [
+    "Sriram Govindan <sriram@bench-ai.com>"
+]
+license = "MIT"
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.10"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"

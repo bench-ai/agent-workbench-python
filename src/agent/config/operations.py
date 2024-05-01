@@ -1,6 +1,6 @@
 import json
 import typing
-from src.config.command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
+from .command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
 
 
 class Operations(list):
@@ -8,9 +8,10 @@ class Operations(list):
     def __init__(
             self,
             op_type: str,
-            timeout=None | int,
+            timeout: None | int = None,
     ):
-        if not (timeout and (0 <= timeout <= 32767)):
+
+        if timeout and not (0 <= timeout <= 32767):
             raise Exception(f"timeout must be between 0 and 32767, got {timeout}")
 
         super().__init__()
@@ -45,7 +46,7 @@ class BrowserOperations(Operations):
 
     def __init__(self,
                  headless: bool = False,
-                 timeout=None | int):
+                 timeout: None | int = None):
         super().__init__("browser", timeout)
 
         self.headless = headless

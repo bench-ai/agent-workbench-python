@@ -1,6 +1,6 @@
 import json
 import typing
-from src.config.command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
+from src.agent.config.command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
 
 
 class Operations(list):

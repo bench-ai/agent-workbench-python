@@ -1,7 +1,7 @@
 import base64
 import json
 import subprocess
-from src.config.operations import Operations, BrowserOperations
+from config.operations import Operations, BrowserOperations
 
 
 class CliError(Exception):
@@ -33,7 +33,7 @@ def load_config(config_path: str) -> list[Operations]:
         return browser_list
 
 
-class Agent:
+class Conduit:
     """
     Class based interface for the agent cli
     """

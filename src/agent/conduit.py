@@ -1,7 +1,7 @@
 import base64
 import json
 import subprocess
-from config.operations import Operations, BrowserOperations
+from .config.operations import Operations, BrowserOperations
 
 
 class CliError(Exception):
@@ -79,12 +79,10 @@ class Conduit:
         for operation in self.config:
             config.append(operation.to_dict())
 
-        command_list.append("-b")
-        config = json.dumps({"operations": config})
+        with open("./temp-config.json", "w") as f:
+            json.dump({"operations": config}, f)
 
-        b64 = base64.b64encode(config.encode('ascii')).decode('utf-8')
-        command_list.append(b64)
-
+        command_list.append("./temp-config.json")
         console_out = subprocess.run(command_list, capture_output=True, text=True)
 
         if console_out.stderr != "":

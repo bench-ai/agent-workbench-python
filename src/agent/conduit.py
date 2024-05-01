@@ -1,7 +1,6 @@
-import base64
 import json
 import subprocess
-from .config.operations import Operations, BrowserOperations
+from .config.operations import Operations, BrowserOperations, LLMOperations
 
 
 class CliError(Exception):
@@ -22,15 +21,19 @@ def load_config(config_path: str) -> list[Operations]:
         operations = data["operations"]
 
         browser_list = []
+        llm_list = []
 
         for opt in operations:
             match opt["type"]:
                 case "browser":
                     browser_list.append(BrowserOperations.load(opt))
+                case "llm":
+                    llm_list.append(LLMOperations.load(opt))
                 case _:
                     raise Exception(f"{opt['type']} is not a valid operation type")
-
-        return browser_list
+        
+        op_list = browser_list + llm_list
+        return op_list
 
 
 class Conduit:

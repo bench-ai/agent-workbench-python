@@ -51,10 +51,7 @@ class Conduit:
         :param verbose: prints the version to the console
         :return:
         """
-        v = subprocess.run(
-            ["config", "version"],
-            capture_output=True,
-            text=True)
+        v = subprocess.run(["config", "version"], capture_output=True, text=True)
 
         response: str = v.stdout
 

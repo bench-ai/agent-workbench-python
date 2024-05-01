@@ -1,14 +1,23 @@
 import json
 import typing
-from .command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click
+from .command import (
+    Command,
+    Navigate,
+    FullPageScreenshot,
+    ElementScreenShot,
+    CollectNodes,
+    SaveHtml,
+    Sleep,
+    Click,
+)
 
 
 class Operations(list):
 
     def __init__(
-            self,
-            op_type: str,
-            timeout: None | int = None,
+        self,
+        op_type: str,
+        timeout: None | int = None,
     ):
 
         if timeout and not (0 <= timeout <= 32767):
@@ -33,7 +42,7 @@ class Operations(list):
         op_dict = {
             "type": self.op_type,
             "settings": self.get_settings(),
-            "command_list": [com.to_dict() for com in self]
+            "command_list": [com.to_dict() for com in self],
         }
 
         return op_dict
@@ -44,9 +53,7 @@ class Operations(list):
 
 class BrowserOperations(Operations):
 
-    def __init__(self,
-                 headless: bool = False,
-                 timeout: None | int = None):
+    def __init__(self, headless: bool = False, timeout: None | int = None):
         super().__init__("browser", timeout)
 
         self.headless = headless
@@ -77,7 +84,9 @@ class BrowserOperations(Operations):
                 case "click":
                     initialized_command = Click.init_from_dict(command)
                 case _:
-                    raise Exception(f"{command['command_name']} is not a valid browser command")
+                    raise Exception(
+                        f"{command['command_name']} is not a valid browser command"
+                    )
 
             browser_opts.append(initialized_command)
 

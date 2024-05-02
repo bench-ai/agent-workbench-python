@@ -105,48 +105,105 @@ class Command:
 
 
 class LLMCommand(Command):
+    """
+    Commands for LLM operations
+    """
+
     def __init__(self, message_type: str, message: dict[str, typing.Any]):
+        """
+        Initializes and LLM command
+        :param message_type: type of llm message
+        :param message: the properties if the command is a dictionary
+        """
         super().__init__("llm", message_type, message)
 
 
 class Standard(LLMCommand):
-    def __init__(self, role: Union[str, None] = None, content: Union[str, None] = None):
+    """
+    A stantdard LLM command, only text input
+    """
+
+    def __init__(self, role: str, content: str):
+        """
+        Initialize a Standard LLM command with optional parameters
+
+        :param role: The role of the speaker (user), defaults to None
+        :param content: The content of the message, defaults to None
+        """
         super().__init__("standard", {"role": role, "content": content})
+        self.role = role
+        self.content = content
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Standard LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Standard LLM command object
+        """
         return cls(command_dict["message"]["role"], command_dict["message"]["content"])
 
     def set_role(self, role: str):
-        self.message["role"] = role
+        """
+        set the role of the command after it is initialized
+
+        :param role: the tole that will be set for the command object
+        """
+        self.role = role
 
     def set_content(self, content: str):
-        self.message["content"] = content
+        """
+        set the content of the command
+
+        :param content: the content of the message that will be set for the command object
+        """
+        self.content = content
 
 
 class Multimodal(LLMCommand):
-    def __init__(
-        self, role: Union[str, None] = None, content: Union[list[dict], None] = None
-    ):
+    """
+    A Multimodal LLM command, can take input of text and image type
+    """
+
+    def __init__(self, role: str, content: list[dict]):
+        """
+        Initialize a Multimodal LLM command with optional parameters
+
+        :param role: generally will be user, defaults to None
+        :param content: The content of the message, defaults to None
+        """
         super().__init__(
             "multimodal",
             {"role": role, "content": content if content is not None else []},
         )
+        self.role = role
+        self.content = content
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Multimodal LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Multimodal LLM command object
+        """
         return cls(command_dict["message"]["role"], command_dict["message"]["content"])
 
     def set_role(self, role: str):
-        self.message["role"] = role
-
-    def addContent(self, type: str, content: str):
         """
-        Example usage:
-        multimodal_command = Multimodal(role="user")
+        set the role of the command after it is initialized
 
-        multimodal_command.addContent("text", "This is some text.")
-        multimodal_command.addContent("image_url", "https://example.com/image.jpg")
+        :param role: the tole that will be set for the command object
+        """
+        self.role = role
+
+    def add_content(self, type: str, content: str):
+        """
+        Allows user to add message content of different types after initializing the Multimodal LLM command object
+
+        :param type: the type of the message content the user is adding, either text or image_url
+        :param content: the actual content that corresponds to the provided type
         """
         if type == "text":
             content_item = {"type": type, "text": content}
@@ -157,30 +214,73 @@ class Multimodal(LLMCommand):
                 "Invalid content type. Type must be 'text' or 'image_url'."
             )
 
-        self.message["content"].append(content_item)
+        self.content.append(content_item)
 
 
 class Assistant(LLMCommand):
-    def __init__(self, role: Union[str, None] = None, content: Union[str, None] = None):
+    """
+    An Assitant LLM command, which represents an assistant response in a conversation with a user.
+    """
+
+    def __init__(self, role: str, content: str):
+        """
+        Initialize an Assistant LLM command with optional parameters
+
+        :param role: assitant, defaults to None
+        :param content: The content of the message, defaults to None
+        """
         super().__init__("standard", {"role": role, "content": content})
+        self.role = role
+        self.content = content
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Assistant LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: an Assistant LLM command object
+        """
         return cls(command_dict["message"]["role"], command_dict["message"]["content"])
 
     def set_role(self, role: str):
-        self.message["role"] = role
+        """
+        Set the role for this assistant message.
+
+        :param role: the new role for this assistant message
+        """
+        self.role = role
 
     def set_content(self, content: str):
-        self.message["content"] = content
+        """
+        Add a content item to the list of contents for this assistant message.
+
+        :params content: the new content item for this assistant message
+        """
+        self.content = content
 
 
 class Tool(LLMCommand):
+    """
+    A Tool LLM command
+    """
+
     def __init__(self, message: dict[str, typing.Any]):
+        """
+        Initialize a Tool LLM command
+
+        :param message: The tool message data as a dictionary
+        """
         super().__init__("tool", message)
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Tool LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: an Assistant LLM command object
+        """
         return cls(command_dict["message"])
 
 
@@ -526,7 +626,6 @@ class SaveHtml(BrowserFile):
 
 
 class Sleep(BrowserCommand):
-
     def __init__(self, seconds: int):
         super().__init__("sleep", {"seconds": seconds})
 
@@ -543,7 +642,6 @@ class Sleep(BrowserCommand):
 
 
 class Click(BrowserCommand):
-
     def __init__(self, selector: str, query_type: str):
         super().__init__("click", {"selector": selector, "query_type": query_type})
 

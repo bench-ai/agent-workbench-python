@@ -4,10 +4,10 @@ This module is in charge of sending and executing commands through the Agent CLI
 
 import json
 import subprocess
-from .config.operations import Operations, BrowserOperations, LLMOperations
+from .config.operation import Operation, BrowserOperations, LLMOperations
 
 
-def load_config(config_path: str) -> list[Operations]:
+def load_config(config_path: str) -> list[Operation]:
     """
     converts a json file to a list of operations
 
@@ -41,7 +41,7 @@ class Conduit:
     Class based interface for the agent cli
     """
 
-    def __init__(self, config: list[Operations]):
+    def __init__(self, config: list[Operation]):
         """
         :param config: The list of operations to execute
         """

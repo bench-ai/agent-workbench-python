@@ -1,3 +1,7 @@
+"""
+This module handles processing operations which are sequences of commands
+"""
+
 import json
 import typing
 from typing import Union
@@ -17,16 +21,25 @@ from .command import (
 )
 
 
-class Operations(list):
+class Operation(list):
+    """
+    Am Operation is a list of commands
+    """
 
     def __init__(
         self,
         op_type: str,
         timeout: None | int = None,
     ):
+        """
+        Initializes an Operation
 
-        if timeout and not (0 <= timeout <= 32767):
-            raise Exception(f"timeout must be between 0 and 32767, got {timeout}")
+        :param op_type: the type of all the commands
+        :param timeout: the max time the operation should run for
+        """
+
+        if timeout and not 0 <= timeout <= 32767:
+            raise IndexError(f"timeout must be between 0 and 32767, got {timeout}")
 
         super().__init__()
 
@@ -34,16 +47,30 @@ class Operations(list):
         self.timeout = timeout
 
     def append(self, command: Command):
+        """
+        Appends a command to the operation if the type is appropriate
 
-        if command.command_type == self.op_type:
-            super().append(command)
-        else:
-            raise Exception(f"cannot append command of type {command.command_type}")
+        :param command: the command to append
+        """
+        if command.command_type != self.op_type:
+            raise TypeError(f"cannot append command of type {command.command_type}")
+
+        super().append(command)
 
     def get_settings(self) -> dict:
+        """
+        Gets the settings of the operations
+
+        :return: the settings dict
+        """
         return {"timeout": self.timeout} if self.timeout else {}
 
     def to_dict(self) -> dict[str, typing.Any]:
+        """
+        converts the operation to a dictionary
+        :return: operation as a dictionary
+        """
+
         op_dict = {
             "type": self.op_type,
             "settings": self.get_settings(),
@@ -53,22 +80,46 @@ class Operations(list):
         return op_dict
 
     def to_json_string(self) -> str:
+        """
+        converts the operation to a json string
+
+        :return: a operation string
+        """
         return json.dumps(self.to_dict())
 
 
-class BrowserOperations(Operations):
+class BrowserOperations(Operation):
+    """
+    An operation that holds and processes browser commands
+    """
 
     def __init__(self, headless: bool = False, timeout: None | int = None):
+        """
+        Initializes a Browser Operation
+
+        :param headless: Sets if you wish to visually see the agent operate on the browser
+        :param timeout: the maxtime the browser operation can operate for
+        """
         super().__init__("browser", timeout)
 
         self.headless = headless
 
     def get_settings(self) -> dict:
+        """
+        Gets the settings of the operation
+        :return: a dict representing the operations
+        """
         super().get_settings()["headless"] = self.headless
         return super().get_settings()
 
     @classmethod
     def load(cls, data_dict: dict):
+        """
+        Constructs a Browser Operation based on a config dictionary
+
+        :param data_dict: a dictionary representing the config
+        :return: A BrowserOperation
+        """
         browser_opts = cls(**data_dict["settings"])
 
         for command in data_dict["command_list"]:
@@ -89,7 +140,7 @@ class BrowserOperations(Operations):
                 case "click":
                     initialized_command = Click.init_from_dict(command)
                 case _:
-                    raise Exception(
+                    raise TypeError(
                         f"{command['command_name']} is not a valid browser command"
                     )
 
@@ -140,7 +191,7 @@ class OPENAI_Settings(LLMSettings):
         super().__setitem__(key, value)
 
 
-class LLMOperations(Operations):
+class LLMOperations(Operation):
     def __init__(
         self,
         try_limit: int,

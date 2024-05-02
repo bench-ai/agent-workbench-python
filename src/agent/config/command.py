@@ -1,5 +1,5 @@
 """
-This Module is in charge defining command that are enacted by the agent
+This Module is in charge of defining commands that are enacted by the agent
 """
 
 import json
@@ -204,6 +204,10 @@ class BrowserCommand(Command):
 
 
 class Navigate(BrowserCommand):
+    """
+    A command that navigates to the url present
+    """
+
     def __init__(self, url: str):
         """
         Initializes the navigate command
@@ -474,11 +478,11 @@ class CollectNodes(BrowserFile):
         :return: a list of nodes
         """
         if not self.exists:
-            raise Exception("node json file does not exist")
+            raise FileNotFoundError("node json file does not exist")
 
         node_path = node_path if node_path else self.file_path
 
-        with open(node_path) as f:
+        with open(node_path, "r", encoding="utf-8") as f:
             node_json_data = json.load(f)
 
         node_list = []
@@ -526,43 +530,89 @@ class SaveHtml(BrowserFile):
 
 
 class Sleep(BrowserCommand):
+    """
+    A command that instructs the browser to sleep for a duration
+    """
 
     def __init__(self, seconds: int):
+        """
+        Initializes a Sleep command
+
+        :param seconds: the sleep duration
+        """
         super().__init__("sleep", {"seconds": seconds})
 
         self.seconds = seconds
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads the Sleep command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Sleep object
+        """
         return cls(command_dict["params"]["seconds"])
 
     @classmethod
     def init_from_json_string(cls, command: str):
+        """
+        loads the Sleep command from a json string
+
+        :param command: the string representation of the command
+        :return: a Sleep object
+        """
         command_dict = json.loads(command)
         return Navigate.init_from_dict(command_dict)
 
 
 class Click(BrowserCommand):
+    """
+    A Command that clicks on a portion of the loaded website
+    """
 
     def __init__(self, selector: str, query_type: str):
-        super().__init__("click", {"selector": selector, "query_type": query_type})
+        """
+        Initializes a click command
 
+        :param selector: the value you are using to discriminate your selection
+        :param query_type: the type of the selector ex: x_path
+        """
+        super().__init__("click", {"selector": selector, "query_type": query_type})
         self.selector = selector
         self.query_type = query_type
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        Loads the Click command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Click object
+        """
         return cls(
             command_dict["params"]["selector"], command_dict["params"]["query_type"]
         )
 
     @classmethod
     def init_from_json_string(cls, command: str):
+        """
+        Loads the Click command from a json string
+
+        :param command: the string representation of the command
+        :return: a Click object
+        """
         command_dict = json.loads(command)
         return Navigate.init_from_dict(command_dict)
 
 
 def move_file(command: BrowserFile, new_path):
+    """
+    Helper function that moves files to different areas
+
+    :param command: the command containing a file
+    :param new_path: the path to where the file should be written
+    """
     f_name = os.path.split(command.file_path)[-1]
     with open(command.file_path, "rb") as f:
         f_bytes = f.read()

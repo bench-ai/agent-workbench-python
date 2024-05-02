@@ -5,6 +5,7 @@ This Module is in charge of defining commands that are enacted by the agent
 import json
 import typing
 import os
+import base64
 
 
 class Node:
@@ -119,15 +120,15 @@ class LLMCommand(Command):
 
 class Standard(LLMCommand):
     """
-    A stantdard LLM command, only text input
+    A Standard LLM command, only text input
     """
 
     def __init__(self, role: str, content: str):
         """
         Initialize a Standard LLM command with optional parameters
 
-        :param role: The role of the speaker (user), defaults to None
-        :param content: The content of the message, defaults to None
+        :param role: The role of the speaker (user)
+        :param content: The content of the message
         """
         super().__init__("standard", {"role": role, "content": content})
         self.role = role
@@ -165,19 +166,18 @@ class Multimodal(LLMCommand):
     A Multimodal LLM command, can take input of text and image type
     """
 
-    def __init__(self, role: str, content: list[dict]):
+    def __init__(self, role: str):
         """
         Initialize a Multimodal LLM command with optional parameters
 
-        :param role: generally will be user, defaults to None
-        :param content: The content of the message, defaults to None
+        :param role: generally will be user
         """
         super().__init__(
             "multimodal",
-            {"role": role, "content": content if content is not None else []},
+            {"role": role, "content": []},
         )
         self.role = role
-        self.content = content
+        self.content = []
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
@@ -187,7 +187,15 @@ class Multimodal(LLMCommand):
         :param command_dict: the dictionary representation of the command
         :return: a Multimodal LLM command object
         """
-        return cls(command_dict["message"]["role"], command_dict["message"]["content"])
+        multimodal_content = cls(command_dict["message"]["role"])
+        for content in command_dict["content"]:
+            if content["type"] == "text":
+                multimodal_content.add_content(content["type"], content["text"])
+            else:
+                multimodal_content.add_content(
+                    content["type"], content["image_url"]["url"]
+                )
+        return cls(command_dict["message"]["role"])
 
     def set_role(self, role: str):
         """
@@ -197,18 +205,24 @@ class Multimodal(LLMCommand):
         """
         self.role = role
 
-    def add_content(self, ctype: str, content: str):
+    def add_content(self, ctype: str, content: str, b64=False):
         """
         Allows user to add message content of different types
         after initializing the Multimodal LLM command object
 
+        :param b64: if the image needs to be base64 encoded
         :param ctype: the type of the message content the user is adding, either text or image_url
         :param content: the actual content that corresponds to the provided type
         """
+        content_item = {"type": ctype}
         if ctype == "text":
-            content_item = {"type": ctype, "text": content}
+            content_item["text"] = content
         elif ctype == "image_url":
-            content_item = {"type": ctype, "image_url": content}
+            if b64:
+                with open(content, "rb") as image_file:
+                    encoded = base64.b64encode(image_file.read()).decode("utf-8")
+                content = f"data:image/{encoded};base64,{encoded}"
+            content_item["image_url"] = {"url": content}
         else:
             raise ValueError(
                 "Invalid content type. Type must be 'text' or 'image_url'."
@@ -219,17 +233,17 @@ class Multimodal(LLMCommand):
 
 class Assistant(LLMCommand):
     """
-    An Assitant LLM command, which represents an assistant response in a conversation with a user.
+    An Assistant LLM command, which represents an assistant response in a conversation with a user.
     """
 
     def __init__(self, role: str, content: str):
         """
-        Initialize an Assistant LLM command with optional parameters
+        Initialize an Assistant LLM command
 
-        :param role: assitant, defaults to None
-        :param content: The content of the message, defaults to None
+        :param role: assistant
+        :param content: The content of the message
         """
-        super().__init__("standard", {"role": role, "content": content})
+        super().__init__("assistant", {"role": role, "content": content})
         self.role = role
         self.content = content
 
@@ -243,25 +257,10 @@ class Assistant(LLMCommand):
         """
         return cls(command_dict["message"]["role"], command_dict["message"]["content"])
 
-    def set_role(self, role: str):
-        """
-        Set the role for this assistant message.
-
-        :param role: the new role for this assistant message
-        """
-        self.role = role
-
-    def set_content(self, content: str):
-        """
-        Add a content item to the list of contents for this assistant message.
-
-        :params content: the new content item for this assistant message
-        """
-        self.content = content
-
 
 class Tool(LLMCommand):
     """
+    TODO
     A Tool LLM command
     """
 

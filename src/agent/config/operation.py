@@ -285,7 +285,7 @@ class LLMOperations(Operation):
                     initialized_command = Tool.init_from_dict(command)
                 case _:
                     raise TypeError(
-                        f"{command['command_name']} is not a valid browser command"
+                        f"{command['command_name']} is not a valid LLM command"
                     )
 
             llm_opts.append(initialized_command)

@@ -15,8 +15,8 @@ def load_config(config_path: str) -> list[Operation]:
     :return: a list of operations
     """
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with open(config_path, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
         operations = data["operations"]
 
@@ -54,11 +54,11 @@ class Conduit:
         :param verbose: prints the version to the console
         :return:
         """
-        v = subprocess.run(
+        version = subprocess.run(
             ["config", "version"], capture_output=True, text=True, check=True
         )
 
-        response: str = v.stdout
+        response: str = version.stdout
 
         if verbose:
             print(response)
@@ -81,8 +81,8 @@ class Conduit:
         for operation in self.config:
             config.append(operation.to_dict())
 
-        with open("./temp-config.json", "w", encoding="utf-8") as f:
-            json.dump({"operations": config}, f)
+        with open("./temp-config.json", "w", encoding="utf-8") as file:
+            json.dump({"operations": config}, file)
 
         command_list.append("./temp-config.json")
         console_out = subprocess.run(

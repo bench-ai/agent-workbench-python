@@ -5,7 +5,7 @@ This Module is in charge of defining commands that are enacted by the agent
 import json
 import typing
 import os
-from typing import Union
+import base64
 
 
 class Node:
@@ -30,7 +30,7 @@ class Node:
 
         self.x_path = x_path
         self.type = node_type
-        self.id = node_id
+        self.id = node_id  # pylint: disable=invalid-name
         self.attributes = attributes
 
     @property
@@ -105,82 +105,181 @@ class Command:
 
 
 class LLMCommand(Command):
+    """
+    Commands for LLM operations
+    """
+
     def __init__(self, message_type: str, message: dict[str, typing.Any]):
+        """
+        Initializes and LLM command
+        :param message_type: type of llm message
+        :param message: the properties if the command is a dictionary
+        """
         super().__init__("llm", message_type, message)
 
 
 class Standard(LLMCommand):
-    def __init__(self, role: Union[str, None] = None, content: Union[str, None] = None):
+    """
+    A Standard LLM command, only text input
+    """
+
+    def __init__(self, role: str, content: str):
+        """
+        Initialize a Standard LLM command with optional parameters
+
+        :param role: The role of the speaker (user)
+        :param content: The content of the message
+        """
         super().__init__("standard", {"role": role, "content": content})
+        self.role = role
+        self.content = content
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Standard LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Standard LLM command object
+        """
         return cls(command_dict["message"]["role"], command_dict["message"]["content"])
 
     def set_role(self, role: str):
-        self.message["role"] = role
+        """
+        set the role of the command after it is initialized
+
+        :param role: the tole that will be set for the command object
+        """
+        self.role = role
 
     def set_content(self, content: str):
-        self.message["content"] = content
+        """
+        set the content of the command
+
+        :param content: the content of the message that will be set for the command object
+        """
+        self.content = content
 
 
 class Multimodal(LLMCommand):
-    def __init__(
-        self, role: Union[str, None] = None, content: Union[list[dict], None] = None
-    ):
+    """
+    A Multimodal LLM command, can take input of text and image type
+    """
+
+    def __init__(self, role: str):
+        """
+        Initialize a Multimodal LLM command with optional parameters
+
+        :param role: generally will be user
+        """
         super().__init__(
             "multimodal",
-            {"role": role, "content": content if content is not None else []},
+            {"role": role, "content": []},
         )
+        self.role = role
+        self.content = []
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-        return cls(command_dict["message"]["role"], command_dict["message"]["content"])
+        """
+        loads Multimodal LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Multimodal LLM command object
+        """
+        multimodal_content = cls(command_dict["message"]["role"])
+        for content in command_dict["content"]:
+            if content["type"] == "text":
+                multimodal_content.add_content(content["type"], content["text"])
+            else:
+                multimodal_content.add_content(
+                    content["type"], content["image_url"]["url"]
+                )
+        return cls(command_dict["message"]["role"])
 
     def set_role(self, role: str):
-        self.message["role"] = role
-
-    def addContent(self, type: str, content: str):
         """
-        Example usage:
-        multimodal_command = Multimodal(role="user")
+        set the role of the command after it is initialized
 
-        multimodal_command.addContent("text", "This is some text.")
-        multimodal_command.addContent("image_url", "https://example.com/image.jpg")
+        :param role: the tole that will be set for the command object
         """
-        if type == "text":
-            content_item = {"type": type, "text": content}
-        elif type == "image_url":
-            content_item = {"type": type, "image_url": content}
+        self.role = role
+
+    def add_content(self, ctype: str, content: str, b64=False):
+        """
+        Allows user to add message content of different types
+        after initializing the Multimodal LLM command object
+
+        :param b64: if the image needs to be base64 encoded
+        :param ctype: the type of the message content the user is adding, either text or image_url
+        :param content: the actual content that corresponds to the provided type
+        """
+        content_item = {"type": ctype}
+        if ctype == "text":
+            content_item["text"] = content
+        elif ctype == "image_url":
+            if b64:
+                with open(content, "rb") as image_file:
+                    encoded = base64.b64encode(image_file.read()).decode("utf-8")
+                content = f"data:image/{encoded};base64,{encoded}"
+            content_item["image_url"] = {"url": content}
         else:
             raise ValueError(
                 "Invalid content type. Type must be 'text' or 'image_url'."
             )
 
-        self.message["content"].append(content_item)
+        self.content.append(content_item)
 
 
 class Assistant(LLMCommand):
-    def __init__(self, role: Union[str, None] = None, content: Union[str, None] = None):
-        super().__init__("standard", {"role": role, "content": content})
+    """
+    An Assistant LLM command, which represents an assistant response in a conversation with a user.
+    """
+
+    def __init__(self, role: str, content: str):
+        """
+        Initialize an Assistant LLM command
+
+        :param role: assistant
+        :param content: The content of the message
+        """
+        super().__init__("assistant", {"role": role, "content": content})
+        self.role = role
+        self.content = content
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Assistant LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: an Assistant LLM command object
+        """
         return cls(command_dict["message"]["role"], command_dict["message"]["content"])
-
-    def set_role(self, role: str):
-        self.message["role"] = role
-
-    def set_content(self, content: str):
-        self.message["content"] = content
 
 
 class Tool(LLMCommand):
+    """
+    TODO
+    A Tool LLM command
+    """
+
     def __init__(self, message: dict[str, typing.Any]):
+        """
+        Initialize a Tool LLM command
+
+        :param message: The tool message data as a dictionary
+        """
         super().__init__("tool", message)
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads Tool LLM command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: an Assistant LLM command object
+        """
         return cls(command_dict["message"])
 
 
@@ -482,8 +581,8 @@ class CollectNodes(BrowserFile):
 
         node_path = node_path if node_path else self.file_path
 
-        with open(node_path, "r", encoding="utf-8") as f:
-            node_json_data = json.load(f)
+        with open(node_path, "r", encoding="utf-8") as file:
+            node_json_data = json.load(file)
 
         node_list = []
         for node in node_json_data:
@@ -614,8 +713,8 @@ def move_file(command: BrowserFile, new_path):
     :param new_path: the path to where the file should be written
     """
     f_name = os.path.split(command.file_path)[-1]
-    with open(command.file_path, "rb") as f:
-        f_bytes = f.read()
+    with open(command.file_path, "rb") as file:
+        f_bytes = file.read()
 
-    with open(os.path.join(new_path, f_name), "wb") as f2:
-        f2.write(f_bytes)
+    with open(os.path.join(new_path, f_name), "wb") as file2:
+        file2.write(f_bytes)

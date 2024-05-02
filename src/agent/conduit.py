@@ -1,10 +1,10 @@
+"""
+This module is in charge of sending and executing commands through the Agent CLI
+"""
+
 import json
 import subprocess
 from .config.operations import Operations, BrowserOperations, LLMOperations
-
-
-class CliError(Exception):
-    pass
 
 
 def load_config(config_path: str) -> list[Operations]:
@@ -15,7 +15,7 @@ def load_config(config_path: str) -> list[Operations]:
     :return: a list of operations
     """
 
-    with open(config_path, "r") as f:
+    with open(config_path, "r", encoding="utf-8") as f:
         data = json.load(f)
 
         operations = data["operations"]
@@ -30,8 +30,8 @@ def load_config(config_path: str) -> list[Operations]:
                 case "llm":
                     llm_list.append(LLMOperations.load(opt))
                 case _:
-                    raise Exception(f"{opt['type']} is not a valid operation type")
-        
+                    raise TypeError(f"{opt['type']} is not a valid operation type")
+
         op_list = browser_list + llm_list
         return op_list
 
@@ -55,9 +55,8 @@ class Conduit:
         :return:
         """
         v = subprocess.run(
-            ["config", "version"],
-            capture_output=True,
-            text=True)
+            ["config", "version"], capture_output=True, text=True, check=True
+        )
 
         response: str = v.stdout
 
@@ -66,8 +65,8 @@ class Conduit:
 
         if response.startswith("Version"):
             return response
-        else:
-            raise ValueError("Agent CLI not found")
+
+        raise ValueError("Agent CLI not found")
 
     def run(self, verbose=False) -> str:
         """
@@ -82,14 +81,13 @@ class Conduit:
         for operation in self.config:
             config.append(operation.to_dict())
 
-        with open("./temp-config.json", "w") as f:
+        with open("./temp-config.json", "w", encoding="utf-8") as f:
             json.dump({"operations": config}, f)
 
         command_list.append("./temp-config.json")
-        console_out = subprocess.run(command_list, capture_output=True, text=True)
-
-        if console_out.stderr != "":
-            raise CliError(console_out.stderr)
+        console_out = subprocess.run(
+            command_list, capture_output=True, text=True, check=True
+        )
 
         if verbose:
             print(console_out.stdout)

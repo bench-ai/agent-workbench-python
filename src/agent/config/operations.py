@@ -1,15 +1,28 @@
 import json
 import typing
 from typing import Union
-from .command import Command, Navigate, FullPageScreenshot, ElementScreenShot, CollectNodes, SaveHtml, Sleep, Click, Standard, Multimodal, Assistant, Tool
+from .command import (
+    Command,
+    Navigate,
+    FullPageScreenshot,
+    ElementScreenShot,
+    CollectNodes,
+    SaveHtml,
+    Sleep,
+    Click,
+    Standard,
+    Multimodal,
+    Assistant,
+    Tool,
+)
 
 
 class Operations(list):
 
     def __init__(
-            self,
-            op_type: str,
-            timeout: None | int = None,
+        self,
+        op_type: str,
+        timeout: None | int = None,
     ):
 
         if timeout and not (0 <= timeout <= 32767):
@@ -34,7 +47,7 @@ class Operations(list):
         op_dict = {
             "type": self.op_type,
             "settings": self.get_settings(),
-            "command_list": [com.to_dict() for com in self]
+            "command_list": [com.to_dict() for com in self],
         }
 
         return op_dict
@@ -45,9 +58,7 @@ class Operations(list):
 
 class BrowserOperations(Operations):
 
-    def __init__(self,
-                 headless: bool = False,
-                 timeout: None | int = None):
+    def __init__(self, headless: bool = False, timeout: None | int = None):
         super().__init__("browser", timeout)
 
         self.headless = headless
@@ -78,11 +89,14 @@ class BrowserOperations(Operations):
                 case "click":
                     initialized_command = Click.init_from_dict(command)
                 case _:
-                    raise Exception(f"{command['command_name']} is not a valid browser command")
+                    raise Exception(
+                        f"{command['command_name']} is not a valid browser command"
+                    )
 
             browser_opts.append(initialized_command)
 
         return browser_opts
+
 
 class LLMSettings(dict):
     def __init__(self, name: Union[str, None] = None, api_key: Union[str, None] = None):
@@ -90,34 +104,57 @@ class LLMSettings(dict):
             raise TypeError("Name must be a string.")
         if not isinstance(api_key, str):
             raise TypeError("API key must be a string.")
-        self.update({'name': name, 'api_key': api_key})
+        self.update({"name": name, "api_key": api_key})
+
 
 class OPENAI_Settings(LLMSettings):
-    def __init__(self, name: Union[str, None] = None, api_key: Union[str, None] = None, model: Union[str, None] = None, temperature: float = 1.0):
+    def __init__(
+        self,
+        name: Union[str, None] = None,
+        api_key: Union[str, None] = None,
+        model: Union[str, None] = None,
+        temperature: float = 1.0,
+    ):
         super().__init__(name, api_key)
         if not isinstance(model, str):
             raise TypeError("Model must be a string.")
         if not isinstance(temperature, float):
             raise TypeError("Temperature must be a float.")
 
-        self._allowed_keys = {'name', 'api_key', 'model', 'temperature'}
-        self.update({'name': name, 'api_key': api_key, 'model': model, 'temperature': temperature})
-    #makes sure that all keys added to openai settings are valid keys
+        self._allowed_keys = {"name", "api_key", "model", "temperature"}
+        self.update(
+            {
+                "name": name,
+                "api_key": api_key,
+                "model": model,
+                "temperature": temperature,
+            }
+        )
+
+    # makes sure that all keys added to openai settings are valid keys
     def __setitem__(self, key, value):
         if key not in self._allowed_keys:
-            raise KeyError(f"Invalid key: '{key}'. Only {', '.join(self._allowed_keys)} keys are allowed.")
+            raise KeyError(
+                f"Invalid key: '{key}'. Only {', '.join(self._allowed_keys)} keys are allowed."
+            )
         super().__setitem__(key, value)
 
 
-
 class LLMOperations(Operations):
-    def __init__(self, try_limit: int, timeout: int, max_tokens: int, llm_settings: list[LLMSettings], workflow_type: str):
+    def __init__(
+        self,
+        try_limit: int,
+        timeout: int,
+        max_tokens: int,
+        llm_settings: list[LLMSettings],
+        workflow_type: str,
+    ):
         super().__init__("llm", timeout)
         self.settings = {
             "try_limit": try_limit,
             "max_tokens": max_tokens,
             "llm_settings": llm_settings,
-            "workflow": {"workflow_type": workflow_type}
+            "workflow": {"workflow_type": workflow_type},
         }
 
     def get_settings(self):
@@ -141,7 +178,9 @@ class LLMOperations(Operations):
                 case "tool":
                     initialized_command = Tool.init_from_dict(command)
                 case _:
-                    raise Exception(f"{command['command_name']} is not a valid browser command")
+                    raise Exception(
+                        f"{command['command_name']} is not a valid browser command"
+                    )
 
             llm_opts.append(initialized_command)
 

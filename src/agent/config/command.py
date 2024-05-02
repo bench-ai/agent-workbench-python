@@ -1,11 +1,10 @@
 """
-This Module is in charge defining command that are enacted by the agent
+This Module is in charge of defining commands that are enacted by the agent
 """
 
 import json
 import typing
 import os
-from typing import Union
 
 
 class Node:
@@ -30,7 +29,7 @@ class Node:
 
         self.x_path = x_path
         self.type = node_type
-        self.id = node_id
+        self.id = node_id  # pylint: disable=invalid-name
         self.attributes = attributes
 
     @property
@@ -198,17 +197,18 @@ class Multimodal(LLMCommand):
         """
         self.role = role
 
-    def add_content(self, type: str, content: str):
+    def add_content(self, ctype: str, content: str):
         """
-        Allows user to add message content of different types after initializing the Multimodal LLM command object
+        Allows user to add message content of different types
+        after initializing the Multimodal LLM command object
 
-        :param type: the type of the message content the user is adding, either text or image_url
+        :param ctype: the type of the message content the user is adding, either text or image_url
         :param content: the actual content that corresponds to the provided type
         """
-        if type == "text":
-            content_item = {"type": type, "text": content}
-        elif type == "image_url":
-            content_item = {"type": type, "image_url": content}
+        if ctype == "text":
+            content_item = {"type": ctype, "text": content}
+        elif ctype == "image_url":
+            content_item = {"type": ctype, "image_url": content}
         else:
             raise ValueError(
                 "Invalid content type. Type must be 'text' or 'image_url'."
@@ -304,6 +304,10 @@ class BrowserCommand(Command):
 
 
 class Navigate(BrowserCommand):
+    """
+    A command that navigates to the url present
+    """
+
     def __init__(self, url: str):
         """
         Initializes the navigate command
@@ -574,12 +578,12 @@ class CollectNodes(BrowserFile):
         :return: a list of nodes
         """
         if not self.exists:
-            raise Exception("node json file does not exist")
+            raise FileNotFoundError("node json file does not exist")
 
         node_path = node_path if node_path else self.file_path
 
-        with open(node_path) as f:
-            node_json_data = json.load(f)
+        with open(node_path, "r", encoding="utf-8") as file:
+            node_json_data = json.load(file)
 
         node_list = []
         for node in node_json_data:
@@ -626,44 +630,92 @@ class SaveHtml(BrowserFile):
 
 
 class Sleep(BrowserCommand):
+    """
+    A command that instructs the browser to sleep for a duration
+    """
+
     def __init__(self, seconds: int):
+        """
+        Initializes a Sleep command
+
+        :param seconds: the sleep duration
+        """
         super().__init__("sleep", {"seconds": seconds})
 
         self.seconds = seconds
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        loads the Sleep command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Sleep object
+        """
         return cls(command_dict["params"]["seconds"])
 
     @classmethod
     def init_from_json_string(cls, command: str):
+        """
+        loads the Sleep command from a json string
+
+        :param command: the string representation of the command
+        :return: a Sleep object
+        """
         command_dict = json.loads(command)
         return Navigate.init_from_dict(command_dict)
 
 
 class Click(BrowserCommand):
-    def __init__(self, selector: str, query_type: str):
-        super().__init__("click", {"selector": selector, "query_type": query_type})
+    """
+    A Command that clicks on a portion of the loaded website
+    """
 
+    def __init__(self, selector: str, query_type: str):
+        """
+        Initializes a click command
+
+        :param selector: the value you are using to discriminate your selection
+        :param query_type: the type of the selector ex: x_path
+        """
+        super().__init__("click", {"selector": selector, "query_type": query_type})
         self.selector = selector
         self.query_type = query_type
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        Loads the Click command from a python dictionary
+
+        :param command_dict: the dictionary representation of the command
+        :return: a Click object
+        """
         return cls(
             command_dict["params"]["selector"], command_dict["params"]["query_type"]
         )
 
     @classmethod
     def init_from_json_string(cls, command: str):
+        """
+        Loads the Click command from a json string
+
+        :param command: the string representation of the command
+        :return: a Click object
+        """
         command_dict = json.loads(command)
         return Navigate.init_from_dict(command_dict)
 
 
 def move_file(command: BrowserFile, new_path):
-    f_name = os.path.split(command.file_path)[-1]
-    with open(command.file_path, "rb") as f:
-        f_bytes = f.read()
+    """
+    Helper function that moves files to different areas
 
-    with open(os.path.join(new_path, f_name), "wb") as f2:
-        f2.write(f_bytes)
+    :param command: the command containing a file
+    :param new_path: the path to where the file should be written
+    """
+    f_name = os.path.split(command.file_path)[-1]
+    with open(command.file_path, "rb") as file:
+        f_bytes = file.read()
+
+    with open(os.path.join(new_path, f_name), "wb") as file2:
+        file2.write(f_bytes)

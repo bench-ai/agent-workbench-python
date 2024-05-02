@@ -4,10 +4,10 @@ This module is in charge of sending and executing commands through the Agent CLI
 
 import json
 import subprocess
-from .config.operations import Operations, BrowserOperations, LLMOperations
+from .config.operation import Operation, BrowserOperations, LLMOperations
 
 
-def load_config(config_path: str) -> list[Operations]:
+def load_config(config_path: str) -> list[Operation]:
     """
     converts a json file to a list of operations
 
@@ -15,8 +15,8 @@ def load_config(config_path: str) -> list[Operations]:
     :return: a list of operations
     """
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
+    with open(config_path, "r", encoding="utf-8") as file:
+        data = json.load(file)
 
         operations = data["operations"]
 
@@ -41,7 +41,7 @@ class Conduit:
     Class based interface for the agent cli
     """
 
-    def __init__(self, config: list[Operations]):
+    def __init__(self, config: list[Operation]):
         """
         :param config: The list of operations to execute
         """
@@ -54,11 +54,11 @@ class Conduit:
         :param verbose: prints the version to the console
         :return:
         """
-        v = subprocess.run(
+        version = subprocess.run(
             ["config", "version"], capture_output=True, text=True, check=True
         )
 
-        response: str = v.stdout
+        response: str = version.stdout
 
         if verbose:
             print(response)
@@ -81,8 +81,8 @@ class Conduit:
         for operation in self.config:
             config.append(operation.to_dict())
 
-        with open("./temp-config.json", "w", encoding="utf-8") as f:
-            json.dump({"operations": config}, f)
+        with open("./temp-config.json", "w", encoding="utf-8") as file:
+            json.dump({"operations": config}, file)
 
         command_list.append("./temp-config.json")
         console_out = subprocess.run(

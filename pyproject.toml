@@ -3,7 +3,8 @@ name = "agent"
 version = "0.0.0"
 description = "python wrapper for bench ai agent cli"
 authors = [
-    "Sriram Govindan <sriram@bench-ai.com>"
+    "Sriram Govindan <sriram@bench-ai.com>",
+    "Anshul Narain <naraina1@uci.edu>"
 ]
 license = "MIT"
 readme = "README.md"
@@ -11,6 +12,8 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.10"
 black = "^24.4.2"
+flake8 = "^7.0.0"
+pylint = "^3.1.0"
 
 
 [build-system]

@@ -86,8 +86,10 @@ class Conduit:
 
         command_list.append("./temp-config.json")
         console_out = subprocess.run(
-            command_list, capture_output=True, text=True, check=True
+            command_list, capture_output=True, text=True, check=False
         )
+        if console_out.stderr != "":
+            raise EnvironmentError(console_out.stderr)
 
         if verbose:
             print(console_out.stdout)

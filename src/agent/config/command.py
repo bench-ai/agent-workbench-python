@@ -17,7 +17,7 @@ class Node:
     """
 
     def __init__(
-        self, x_path: str, node_type: str, node_id: str, attributes: dict[str, str]
+            self, x_path: str, node_type: str, node_id: str, attributes: dict[str, str]
     ):
         """
         Initializes a Node
@@ -72,7 +72,7 @@ class Command:
     """
 
     def __init__(
-        self, command_type: str, command_name: str, params: dict[str, typing.Any]
+            self, command_type: str, command_name: str, params: dict[str, typing.Any]
     ):
         """
         Initializes a parent command
@@ -116,6 +116,10 @@ class LLMCommand(Command):
         :param message: the properties if the command is a dictionary
         """
         super().__init__("llm", message_type, message)
+        self.message_type = message_type
+
+    def to_dict(self) -> dict:
+        return {"message_type": self.message_type, "message": self.params}
 
 
 class Standard(LLMCommand):
@@ -172,12 +176,12 @@ class Multimodal(LLMCommand):
 
         :param role: generally will be user
         """
+        self.content = []
         super().__init__(
             "multimodal",
-            {"role": role, "content": []},
+            {"role": role, "content": self.content},
         )
         self.role = role
-        self.content = []
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
@@ -346,7 +350,7 @@ class BrowserFile(BrowserCommand):
     """
 
     def __init__(
-        self, command_name: str, params: dict, file_name: str, snap_shot_name: str
+            self, command_name: str, params: dict, file_name: str, snap_shot_name: str
     ):
         """
         Initializes a browser file command

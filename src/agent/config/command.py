@@ -172,7 +172,7 @@ class Multimodal(LLMCommand):
 
     def __init__(self, role: str):
         """
-        Initialize a Multimodal LLM command with optional parameters
+        Initialize a Multimodal LLM command
 
         :param role: generally will be user
         """

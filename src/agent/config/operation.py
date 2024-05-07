@@ -109,8 +109,9 @@ class BrowserOperations(Operation):
         Gets the settings of the operation
         :return: a dict representing the operations
         """
-        super().get_settings()["headless"] = self.headless
-        return super().get_settings()
+        settings = super().get_settings()
+        settings["headless"] = self.headless
+        return settings
 
     @classmethod
     def load(cls, data_dict: dict):
@@ -154,12 +155,13 @@ class LLMSettings(dict):
     A dictionary subclass for the settings of an LLM.
     """
 
-    def __init__(self, name: Union[str, None] = None, api_key: Union[str, None] = None):
+    def __init__(self, name: Union[str, None] = None, api_key: Union[str, None] = None, **kwargs):
         """
         Initializes the LLMSettings dictionary with the name of the LLM and the api key
 
         :param name: The name of the LLM (OpenAI, Gemini, etc.)
         :param: api_key: the api key needed to access the LLM api
+        :param kwargs: additional keyword arguments
         """
         super().__init__()
         if not isinstance(name, str):
@@ -271,7 +273,15 @@ class LLMOperations(Operation):
 
         :params data_dict: python dictionary representing an LLM Command
         """
-        llm_opts = cls(**data_dict["settings"])
+        llm_opts = cls(
+            try_limit=data_dict["settings"]["try_limit"],
+            timeout=data_dict["settings"]["timeout"],
+            max_tokens=data_dict["settings"]["max_tokens"],
+            llm_settings=[
+                LLMSettings(**llm_setting) for llm_setting in data_dict["settings"]["llm_settings"]
+            ],
+            workflow_type=data_dict["settings"]["workflow"]["workflow_type"],
+        )
 
         for command in data_dict["command_list"]:
 

@@ -1,7 +1,7 @@
 import os
 import shutil
 import pytest
-from src.agent.config.command import (
+from agent.config.command import (
     Command,
     LLMCommand,
     Standard,

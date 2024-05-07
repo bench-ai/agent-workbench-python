@@ -139,7 +139,7 @@ def test_multimodal_init_from_dict():
     assert multimodal_command.content[1]["type"] == "image_url"
     assert (multimodal_command.content[1]["image_url"]["url"]
             == "https://example.com/image.jpg"
-    )
+            )
 
 
 def test_multimodal_set_role():
@@ -534,4 +534,3 @@ class TestMoveFile:
         assert os.path.exists(resources_directory)
         shutil.rmtree(resources_directory)
         assert not os.path.exists(resources_directory)
-

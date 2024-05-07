@@ -49,7 +49,7 @@ def browser_operation():
 
 def test_browser_operation_creation(browser_operation):
     assert browser_operation.op_type == "browser"
-    assert browser_operation.headless == True
+    assert browser_operation.headless is True
 
 
 def test_browser_operation_append_valid_command(browser_operation):

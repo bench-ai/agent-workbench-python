@@ -439,7 +439,7 @@ class FullPageScreenshot(BrowserFile):
         :return: a FullPageScreenshot object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return FullPageScreenshot.init_from_dict(command_dict)
 
     @property
     def file_path(self) -> str:
@@ -506,7 +506,7 @@ class ElementScreenShot(BrowserFile):
         :return: a ElementScreenShot object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return ElementScreenShot.init_from_dict(command_dict)
 
     @property
     def file_path(self) -> str:
@@ -571,7 +571,7 @@ class CollectNodes(BrowserFile):
         :return: a CollectNodes object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return CollectNodes.init_from_dict(command_dict)
 
     def load_json(self, node_path: str | None = None) -> list[Node]:
         """
@@ -629,7 +629,7 @@ class SaveHtml(BrowserFile):
         :return: a SaveHtml object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return SaveHtml.init_from_dict(command_dict)
 
 
 class Sleep(BrowserCommand):
@@ -666,7 +666,7 @@ class Sleep(BrowserCommand):
         :return: a Sleep object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return Sleep.init_from_dict(command_dict)
 
 
 class Click(BrowserCommand):
@@ -706,7 +706,7 @@ class Click(BrowserCommand):
         :return: a Click object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return Click.init_from_dict(command_dict)
 
 
 def move_file(command: BrowserFile, new_path):

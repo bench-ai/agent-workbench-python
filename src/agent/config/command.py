@@ -17,7 +17,7 @@ class Node:
     """
 
     def __init__(
-            self, x_path: str, node_type: str, node_id: str, attributes: dict[str, str]
+        self, x_path: str, node_type: str, node_id: str, attributes: dict[str, str]
     ):
         """
         Initializes a Node
@@ -72,7 +72,7 @@ class Command:
     """
 
     def __init__(
-            self, command_type: str, command_name: str, params: dict[str, typing.Any]
+        self, command_type: str, command_name: str, params: dict[str, typing.Any]
     ):
         """
         Initializes a parent command
@@ -350,7 +350,7 @@ class BrowserFile(BrowserCommand):
     """
 
     def __init__(
-            self, command_name: str, params: dict, file_name: str, snap_shot_name: str
+        self, command_name: str, params: dict, file_name: str, snap_shot_name: str
     ):
         """
         Initializes a browser file command

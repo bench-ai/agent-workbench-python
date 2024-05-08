@@ -35,4 +35,4 @@ jobs:
       run: poetry run black --check .
 
     - name: Run Pylint
-      run: poetry run pylint src/agent/config test/agent/config
+      run: poetry run pylint src/agent test/agent/config

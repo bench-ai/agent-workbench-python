@@ -155,7 +155,10 @@ class LLMSettings(dict):
     A dictionary subclass for the settings of an LLM.
     """
 
-    def __init__(self, name: Union[str, None] = None, api_key: Union[str, None] = None, **kwargs):
+    def __init__(
+        self, name: Union[str, None] = None, api_key: Union[str, None] = None, **kwargs
+    ):
+        # pylint: disable=W0613
         """
         Initializes the LLMSettings dictionary with the name of the LLM and the api key
 
@@ -278,7 +281,8 @@ class LLMOperations(Operation):
             timeout=data_dict["settings"]["timeout"],
             max_tokens=data_dict["settings"]["max_tokens"],
             llm_settings=[
-                LLMSettings(**llm_setting) for llm_setting in data_dict["settings"]["llm_settings"]
+                LLMSettings(**llm_setting)
+                for llm_setting in data_dict["settings"]["llm_settings"]
             ],
             workflow_type=data_dict["settings"]["workflow"]["workflow_type"],
         )

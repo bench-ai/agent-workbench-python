@@ -13,7 +13,7 @@ class Node:
     Nodes are sections of an HTML page, often representing
     raw text or HTML elements. They contain data such as type and
     xpath that make it really easy to locate portions of a page
-    for later use such as clicking.
+    for later use, such as clicking.
     """
 
     def __init__(
@@ -22,7 +22,7 @@ class Node:
         """
         Initializes a Node
 
-        :param x_path: the path to the node in the html document
+        :param x_path: The path to the node in the html document
         :param node_type: states the type of the node (element, text, ...)
         :param node_id: the unique id of the node in the document
         :param attributes: the html attributes (alt, id, ...)
@@ -112,10 +112,14 @@ class LLMCommand(Command):
     def __init__(self, message_type: str, message: dict[str, typing.Any]):
         """
         Initializes and LLM command
-        :param message_type: type of llm message
+        :param message_type: type of llm messages
         :param message: the properties if the command is a dictionary
         """
         super().__init__("llm", message_type, message)
+        self.message_type = message_type
+
+    def to_dict(self) -> dict:
+        return {"message_type": self.message_type, "message": self.params}
 
 
 class Standard(LLMCommand):
@@ -127,12 +131,12 @@ class Standard(LLMCommand):
         """
         Initialize a Standard LLM command with optional parameters
 
-        :param role: The role of the speaker (user)
+        :param role: The role of the speaker (user).
         :param content: The content of the message
         """
-        super().__init__("standard", {"role": role, "content": content})
         self.role = role
         self.content = content
+        super().__init__("standard", {"role": self.role, "content": self.content})
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
@@ -163,21 +167,21 @@ class Standard(LLMCommand):
 
 class Multimodal(LLMCommand):
     """
-    A Multimodal LLM command, can take input of text and image type
+    A Multimodal LLM command can take input of a text and image type
     """
 
     def __init__(self, role: str):
         """
-        Initialize a Multimodal LLM command with optional parameters
+        Initialize a Multimodal LLM command
 
         :param role: generally will be user
         """
+        self.content = []
+        self.role = role
         super().__init__(
             "multimodal",
-            {"role": role, "content": []},
+            {"role": self.role, "content": self.content},
         )
-        self.role = role
-        self.content = []
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
@@ -188,14 +192,14 @@ class Multimodal(LLMCommand):
         :return: a Multimodal LLM command object
         """
         multimodal_content = cls(command_dict["message"]["role"])
-        for content in command_dict["content"]:
+        for content in command_dict["message"]["content"]:
             if content["type"] == "text":
                 multimodal_content.add_content(content["type"], content["text"])
             else:
                 multimodal_content.add_content(
                     content["type"], content["image_url"]["url"]
                 )
-        return cls(command_dict["message"]["role"])
+        return multimodal_content
 
     def set_role(self, role: str):
         """
@@ -210,7 +214,7 @@ class Multimodal(LLMCommand):
         Allows user to add message content of different types
         after initializing the Multimodal LLM command object
 
-        :param b64: if the image needs to be base64 encoded
+        :param b64: Whether the image needs to be base64 encoded
         :param ctype: the type of the message content the user is adding, either text or image_url
         :param content: the actual content that corresponds to the provided type
         """
@@ -240,12 +244,12 @@ class Assistant(LLMCommand):
         """
         Initialize an Assistant LLM command
 
-        :param role: assistant
+        :param role: Assistant
         :param content: The content of the message
         """
-        super().__init__("assistant", {"role": role, "content": content})
         self.role = role
         self.content = content
+        super().__init__("assistant", {"role": self.role, "content": self.content})
 
     @classmethod
     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
@@ -268,7 +272,7 @@ class Tool(LLMCommand):
         """
         Initialize a Tool LLM command
 
-        :param message: The tool message data as a dictionary
+        :param message: The tool message's data as a dictionary
         """
         super().__init__("tool", message)
 
@@ -295,7 +299,7 @@ class BrowserCommand(Command):
         """
         Initializes a browser command
 
-        :param command_name: the name of the browser command
+        :param command_name: The name of the browser commands
         :param params: the properties of the command as a dictionary
         """
 
@@ -311,7 +315,7 @@ class Navigate(BrowserCommand):
         """
         Initializes the navigate command
 
-        :param url: a hyperlink to the webpage that you
+        :param url: A hyperlink to the webpage that you
         wish to navigate too
         """
 
@@ -351,7 +355,7 @@ class BrowserFile(BrowserCommand):
         """
         Initializes a browser file command
 
-        :param command_name: the name of the command
+        :param command_name: The name of the command
         :param params: the properties of the command as a dictionary
         :param file_name: the name of the file being written to
         :param snap_shot_name: the name of the snapshot folder to save
@@ -369,7 +373,7 @@ class BrowserFile(BrowserCommand):
         """
         Gets the path to the saved file
 
-        :return: the saved file path
+        :return: The saved file path
         """
         return os.path.join(
             "./resources", "snapshots", self.snap_shot_name, self.file_name
@@ -380,7 +384,7 @@ class BrowserFile(BrowserCommand):
         """
         checks whether the file has been written
 
-        :return: a boolean representing the files existence
+        :return: a boolean representing the file's existence
         """
         return os.path.exists(self.file_path)
 
@@ -394,7 +398,8 @@ class FullPageScreenshot(BrowserFile):
         """
         Initializes a FullPageScreenshot command
 
-        :param quality: the screenshot quality. The higher, the better
+        :param quality: The screenshot quality.
+        The higher, the better
         :param name: name of the screenshot file
         :param snap_shot_name: what snapshot folder to save too
         """
@@ -435,14 +440,14 @@ class FullPageScreenshot(BrowserFile):
         :return: a FullPageScreenshot object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return FullPageScreenshot.init_from_dict(command_dict)
 
     @property
     def file_path(self) -> str:
         """
         Gets the path to the saved file
 
-        :return: the saved file path
+        :return: The saved file path
         """
 
         return os.path.join(
@@ -459,9 +464,9 @@ class ElementScreenShot(BrowserFile):
         """
         Initializes a ElementScreenShot command
 
-        :param scale: the size and quality of the image
+        :param scale: The size and quality of the image
         :param selector: the xpath selector used to capture the image
-        :param name: the name of the image file that will be written
+        :param name: the name of the image file that will be written in
         :param snap_shot_name: the snapshot folder to save the image too
         """
         super().__init__(
@@ -502,14 +507,14 @@ class ElementScreenShot(BrowserFile):
         :return: a ElementScreenShot object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return ElementScreenShot.init_from_dict(command_dict)
 
     @property
     def file_path(self) -> str:
         """
         Gets the path to the saved file
 
-        :return: the saved file path
+        :return: The saved file path
         """
         return os.path.join(
             "./resources", "snapshots", self.snap_shot_name, "images", self.file_name
@@ -525,9 +530,8 @@ class CollectNodes(BrowserFile):
         """
         Initializes a CollectNodes command
 
-        :param selector: the css selector representing the section you
-         want to extract
-        :param snap_shot_name: the folder to write the data too
+        :param selector: The css selector that represents the section you want to extract
+        :param snap_shot_name: the folder to write the data to
         :param wait_ready: whether to wait for the element to appear
         """
         super().__init__(
@@ -563,17 +567,17 @@ class CollectNodes(BrowserFile):
         """
         Loads the CollectNodes command from a json string
 
-        :param command: the string representation of the command
+        :param command: The string representation of the command
         :return: a CollectNodes object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return CollectNodes.init_from_dict(command_dict)
 
     def load_json(self, node_path: str | None = None) -> list[Node]:
         """
         Loads the collected file and return a list of nodes
 
-        :param node_path: the path to the node file
+        :param node_path: The path to the node files
         :return: a list of nodes
         """
         if not self.exists:
@@ -600,7 +604,7 @@ class SaveHtml(BrowserFile):
         """
         Initializes a CollectNodes command
 
-        :param snap_shot_name: the snapshot to save the html too
+        :param snap_shot_name: The snapshot to save the html too
         """
         super().__init__(
             "save_html", {"snap_shot_name": snap_shot_name}, "body.txt", snap_shot_name
@@ -621,11 +625,11 @@ class SaveHtml(BrowserFile):
         """
         Loads the SaveHtml command from a json string
 
-        :param command: the string representation of the command
+        :param command: The string representation of command
         :return: a SaveHtml object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return SaveHtml.init_from_dict(command_dict)
 
 
 class Sleep(BrowserCommand):
@@ -637,7 +641,7 @@ class Sleep(BrowserCommand):
         """
         Initializes a Sleep command
 
-        :param seconds: the sleep duration
+        :param seconds: The sleep duration
         """
         super().__init__("sleep", {"seconds": seconds})
 
@@ -662,7 +666,7 @@ class Sleep(BrowserCommand):
         :return: a Sleep object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return Sleep.init_from_dict(command_dict)
 
 
 class Click(BrowserCommand):
@@ -674,7 +678,7 @@ class Click(BrowserCommand):
         """
         Initializes a click command
 
-        :param selector: the value you are using to discriminate your selection
+        :param selector: The value you are using to discriminate your selection
         :param query_type: the type of the selector ex: x_path
         """
         super().__init__("click", {"selector": selector, "query_type": query_type})
@@ -686,7 +690,7 @@ class Click(BrowserCommand):
         """
         Loads the Click command from a python dictionary
 
-        :param command_dict: the dictionary representation of the command
+        :param command_dict: The dictionary representation of the command
         :return: a Click object
         """
         return cls(
@@ -698,18 +702,18 @@ class Click(BrowserCommand):
         """
         Loads the Click command from a json string
 
-        :param command: the string representation of the command
+        :param command: The string representation of the command
         :return: a Click object
         """
         command_dict = json.loads(command)
-        return Navigate.init_from_dict(command_dict)
+        return Click.init_from_dict(command_dict)
 
 
 def move_file(command: BrowserFile, new_path):
     """
     Helper function that moves files to different areas
 
-    :param command: the command containing a file
+    :param command: The command containing a file
     :param new_path: the path to where the file should be written
     """
     f_name = os.path.split(command.file_path)[-1]

@@ -34,7 +34,7 @@ class Operation(list):
         """
         Initializes an Operation
 
-        :param op_type: the type of all the commands
+        :param op_type: The type of all the commands
         :param timeout: the max time the operation should run for
         """
 
@@ -50,7 +50,7 @@ class Operation(list):
         """
         Appends a command to the operation if the type is appropriate
 
-        :param command: the command to append
+        :param command: The command to append
         """
         if command.command_type != self.op_type:
             raise TypeError(f"cannot append command of type {command.command_type}")
@@ -61,7 +61,7 @@ class Operation(list):
         """
         Gets the settings of the operations
 
-        :return: the settings dict
+        :return: The settings dict
         """
         return {"timeout": self.timeout} if self.timeout else {}
 
@@ -83,7 +83,7 @@ class Operation(list):
         """
         converts the operation to a json string
 
-        :return: a operation string
+        :return: an operation string
         """
         return json.dumps(self.to_dict())
 
@@ -109,15 +109,16 @@ class BrowserOperations(Operation):
         Gets the settings of the operation
         :return: a dict representing the operations
         """
-        super().get_settings()["headless"] = self.headless
-        return super().get_settings()
+        settings = super().get_settings()
+        settings["headless"] = self.headless
+        return settings
 
     @classmethod
     def load(cls, data_dict: dict):
         """
         Constructs a Browser Operation based on a config dictionary
 
-        :param data_dict: a dictionary representing the config
+        :param data_dict: A dictionary representing the config
         :return: A BrowserOperation
         """
         browser_opts = cls(**data_dict["settings"])
@@ -154,13 +155,18 @@ class LLMSettings(dict):
     A dictionary subclass for the settings of an LLM.
     """
 
-    def __init__(self, name: Union[str, None] = None, api_key: Union[str, None] = None):
+    def __init__(
+        self, name: Union[str, None] = None, api_key: Union[str, None] = None, **kwargs
+    ):
+        # pylint: disable=W0613
         """
         Initializes the LLMSettings dictionary with the name of the LLM and the api key
 
-        :param name: the name of the LLM (OpenAI, Gemini, etc.)
-        :api_key: the api key needed to access the LLM api
+        :param name: The name of the LLM (OpenAI, Gemini, etc.)
+        :param: api_key: the api key needed to access the LLM api
+        :param kwargs: additional keyword arguments
         """
+        super().__init__()
         if not isinstance(name, str):
             raise TypeError("Name must be a string.")
         if not isinstance(api_key, str):
@@ -183,8 +189,8 @@ class OpenAISettings(LLMSettings):
         """
         Initializes the OPENAI_Settings object
         :param name: the name of the api
-        :param api_key: the api key for the api
-        :param model: the specific OpenAI model the user wants to use (eg. gpt-3.5-turbo)
+        :param api_key:  key for the api
+        :param model: the specific OpenAI model the user wants to use (e.g., gpt-3.5-turbo)
         :param temperature: the temperature the user wants the model to use
         """
         super().__init__(name, api_key)
@@ -206,11 +212,11 @@ class OpenAISettings(LLMSettings):
     # makes sure that all keys added to openai settings are valid keys
     def __setitem__(self, key, value):
         """
-        Overrides set item method from dict so we can ensure only allowed keys get added.
-        If an invalid key is tried to be added it will raise a
+        Overrides set item method from dict, so we can ensure only allowed keys get added.
+        If an invalid key is tried to be added, it will raise a
             KeyError with a message saying which key was invalid.
 
-        :param key: the key the user wants to add to the dict
+        :param key: The key the user wants to add to the dict
         :param value: the value the user wants to give the key
         """
         if key not in self._allowed_keys:
@@ -238,11 +244,11 @@ class LLMOperations(Operation):
 
         :param try_limit: the number of times the user wants a request to be
             tried by the agent if it is not able to get a response on the first try
-        :param timeout: the ammount of time the user wants the agent to allow
-            for a response to be recieved from a model before requesting again
+        :param timeout: the amount of time the user wants the agent to allow
+            for a response to be received from a model before requesting again
         :param max_tokens: the maximum number of words the user wants the model's response to be
-        :param llm_settings: a list of LLMSettings objects defineing the settings
-            for the different LLMs the user wants the agent to swwitch between
+        :param llm_settings: a list of LLMSettings objects defining the settings
+            for the different LLMs the user wants the agent to switch between
         :param workflow_type: the type of agentic workflow the user wants the agent to implement
         """
         super().__init__("llm", timeout)
@@ -265,12 +271,21 @@ class LLMOperations(Operation):
     def load(cls, data_dict: dict):
         """
         takes in a python dictionary and identifies what type of
-        LLM Command is being desribed by the deictionary
+        LLM Command is being described by the dictionary
         appends an object of that type to a list of LLM Operations
 
-        :params data_dict: python dictionary represeanting an LLM Command
+        :params data_dict: python dictionary representing an LLM Command
         """
-        llm_opts = cls(**data_dict["settings"])
+        llm_opts = cls(
+            try_limit=data_dict["settings"]["try_limit"],
+            timeout=data_dict["settings"]["timeout"],
+            max_tokens=data_dict["settings"]["max_tokens"],
+            llm_settings=[
+                LLMSettings(**llm_setting)
+                for llm_setting in data_dict["settings"]["llm_settings"]
+            ],
+            workflow_type=data_dict["settings"]["workflow"]["workflow_type"],
+        )
 
         for command in data_dict["command_list"]:
 

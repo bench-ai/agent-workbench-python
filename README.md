@@ -48,7 +48,7 @@ Initializing with arguments:
 ```python
 from agent.config.command import FullPageScreenshot
 # Take a full page screenshot
-full_page_screenshot_command = FullPageScreenshot(quality=80, name="example_page", snap_shot_name="<location")
+full_page_screenshot_command = FullPageScreenshot(quality=80, name="example_page", snap_shot_name="<location>")
 ```
 Initializing with a dictionary:
 ```python 

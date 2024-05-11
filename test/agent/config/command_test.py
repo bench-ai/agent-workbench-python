@@ -304,10 +304,10 @@ def test_browser_file_initialization(sample_browser_file):
     assert sample_browser_file.command_name == "save_file"
     assert sample_browser_file.params == {
         "param": "value",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert sample_browser_file.file_name == "test.txt"
-    assert sample_browser_file.snap_shot_name == "snapshot"
+    assert sample_browser_file.snapshot_name == "snapshot"
 
 
 def test_file_path(sample_browser_file):
@@ -328,7 +328,7 @@ def test_exists(sample_browser_file, tmpdir):
     with open(file_path, "w", encoding="utf-8") as f:
         f.write("Test content")
     sample_browser_file.file_name = "test.txt"
-    sample_browser_file.snap_shot_name = str(tmpdir)
+    sample_browser_file.snapshot_name = str(tmpdir)
     assert sample_browser_file.exists
 
 
@@ -339,7 +339,7 @@ def test_not_exists(sample_browser_file, tmpdir):
     :param tmpdir: A temporary directory
     """
     sample_browser_file.file_name = "nonexistent.txt"
-    sample_browser_file.snap_shot_name = str(tmpdir)
+    sample_browser_file.snapshot_name = str(tmpdir)
     assert not sample_browser_file.exists
 
 
@@ -360,10 +360,10 @@ def test_full_page_screenshot_initialization(sample_full_page_screenshot):
     assert sample_full_page_screenshot.params == {
         "quality": 90,
         "name": "full_page_screenshot.png",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert sample_full_page_screenshot.file_name == "full_page_screenshot.png"
-    assert sample_full_page_screenshot.snap_shot_name == "snapshot"
+    assert sample_full_page_screenshot.snapshot_name == "snapshot"
 
 
 def test_full_page_screenshot_file_path(sample_full_page_screenshot):
@@ -386,7 +386,7 @@ def test_full_page_screenshot_init_from_dict():
         "params": {
             "quality": 90,
             "name": "full_page_screenshot.png",
-            "snap_shot_name": "snapshot",
+            "snapshot_name": "snapshot",
         },
     }
     full_page_screenshot = FullPageScreenshot.init_from_dict(command_dict)
@@ -394,10 +394,10 @@ def test_full_page_screenshot_init_from_dict():
     assert full_page_screenshot.params == {
         "quality": 90,
         "name": "full_page_screenshot.png",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert full_page_screenshot.file_name == "full_page_screenshot.png"
-    assert full_page_screenshot.snap_shot_name == "snapshot"
+    assert full_page_screenshot.snapshot_name == "snapshot"
 
 
 def test_full_page_screenshot_init_from_json_string():
@@ -408,17 +408,17 @@ def test_full_page_screenshot_init_from_json_string():
         '{"command_name": "full_page_screenshot", '
         '"params": {"quality": 90, '
         '"name": "full_page_screenshot.png", '
-        '"snap_shot_name": "snapshot"}}'
+        '"snapshot_name": "snapshot"}}'
     )
     full_page_screenshot = FullPageScreenshot.init_from_json_string(command_json)
     assert full_page_screenshot.command_name == "full_page_screenshot"
     assert full_page_screenshot.params == {
         "quality": 90,
         "name": "full_page_screenshot.png",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert full_page_screenshot.file_name == "full_page_screenshot.png"
-    assert full_page_screenshot.snap_shot_name == "snapshot"
+    assert full_page_screenshot.snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -441,10 +441,10 @@ def test_element_screenshot_initialization(sample_element_screenshot):
         "scale": 2,
         "name": "element_screenshot.png",
         "selector": "//div[@id='element']",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert sample_element_screenshot.file_name == "element_screenshot.png"
-    assert sample_element_screenshot.snap_shot_name == "snapshot"
+    assert sample_element_screenshot.snapshot_name == "snapshot"
 
 
 def test_element_screenshot_file_path(sample_element_screenshot):
@@ -468,7 +468,7 @@ def test_element_screenshot_init_from_dict():
             "scale": 2,
             "name": "element_screenshot.png",
             "selector": "//div[@id='element']",
-            "snap_shot_name": "snapshot",
+            "snapshot_name": "snapshot",
         },
     }
     element_screenshot = ElementScreenShot.init_from_dict(command_dict)
@@ -477,10 +477,10 @@ def test_element_screenshot_init_from_dict():
         "scale": 2,
         "name": "element_screenshot.png",
         "selector": "//div[@id='element']",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert element_screenshot.file_name == "element_screenshot.png"
-    assert element_screenshot.snap_shot_name == "snapshot"
+    assert element_screenshot.snapshot_name == "snapshot"
 
 
 def test_element_screenshot_init_from_json_string():
@@ -492,7 +492,7 @@ def test_element_screenshot_init_from_json_string():
         '"params": {"scale": 2, '
         '"name": "element_screenshot.png", '
         '"selector": "//div[@id=\'element\']", '
-        '"snap_shot_name": "snapshot"}}'
+        '"snapshot_name": "snapshot"}}'
     )
     element_screenshot = ElementScreenShot.init_from_json_string(command_json)
     assert element_screenshot.command_name == "element_screenshot"
@@ -500,10 +500,10 @@ def test_element_screenshot_init_from_json_string():
         "scale": 2,
         "name": "element_screenshot.png",
         "selector": "//div[@id='element']",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
     }
     assert element_screenshot.file_name == "element_screenshot.png"
-    assert element_screenshot.snap_shot_name == "snapshot"
+    assert element_screenshot.snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -522,11 +522,11 @@ def test_collect_nodes_initialization(sample_collect_nodes):
     assert sample_collect_nodes.command_name == "collect_nodes"
     assert sample_collect_nodes.params == {
         "selector": "//div[@class='container']",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
         "wait_ready": False,
     }
     assert sample_collect_nodes.file_name == "nodeData.json"
-    assert sample_collect_nodes.snap_shot_name == "snapshot"
+    assert sample_collect_nodes.snapshot_name == "snapshot"
 
 
 def test_collect_nodes_file_path(sample_collect_nodes):
@@ -547,7 +547,7 @@ def test_collect_nodes_init_from_dict():
         "command_name": "collect_nodes",
         "params": {
             "selector": "//div[@class='container']",
-            "snap_shot_name": "snapshot",
+            "snapshot_name": "snapshot",
             "wait_ready": False,
         },
     }
@@ -555,11 +555,11 @@ def test_collect_nodes_init_from_dict():
     assert collect_nodes.command_name == "collect_nodes"
     assert collect_nodes.params == {
         "selector": "//div[@class='container']",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
         "wait_ready": False,
     }
     assert collect_nodes.file_name == "nodeData.json"
-    assert collect_nodes.snap_shot_name == "snapshot"
+    assert collect_nodes.snapshot_name == "snapshot"
 
 
 def test_collect_nodes_init_from_json_string():
@@ -570,17 +570,17 @@ def test_collect_nodes_init_from_json_string():
         '{"command_name": '
         '"collect_nodes", '
         '"params": {"selector": "//div[@class=\'container\']", '
-        '"snap_shot_name": "snapshot", "wait_ready": false}}'
+        '"snapshot_name": "snapshot", "wait_ready": false}}'
     )
     collect_nodes = CollectNodes.init_from_json_string(command_json)
     assert collect_nodes.command_name == "collect_nodes"
     assert collect_nodes.params == {
         "selector": "//div[@class='container']",
-        "snap_shot_name": "snapshot",
+        "snapshot_name": "snapshot",
         "wait_ready": False,
     }
     assert collect_nodes.file_name == "nodeData.json"
-    assert collect_nodes.snap_shot_name == "snapshot"
+    assert collect_nodes.snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -598,9 +598,9 @@ def test_save_html_initialization(sample_save_html):
     :param sample_save_html: A Save HTML object
     """
     assert sample_save_html.command_name == "save_html"
-    assert sample_save_html.params == {"snap_shot_name": "snapshot"}
+    assert sample_save_html.params == {"snapshot_name": "snapshot"}
     assert sample_save_html.file_name == "body.txt"
-    assert sample_save_html.snap_shot_name == "snapshot"
+    assert sample_save_html.snapshot_name == "snapshot"
 
 
 def test_save_html_init_from_dict():
@@ -609,13 +609,13 @@ def test_save_html_init_from_dict():
     """
     command_dict = {
         "command_name": "save_html",
-        "params": {"snap_shot_name": "snapshot"},
+        "params": {"snapshot_name": "snapshot"},
     }
     save_html = SaveHtml.init_from_dict(command_dict)
     assert save_html.command_name == "save_html"
-    assert save_html.params == {"snap_shot_name": "snapshot"}
+    assert save_html.params == {"snapshot_name": "snapshot"}
     assert save_html.file_name == "body.txt"
-    assert save_html.snap_shot_name == "snapshot"
+    assert save_html.snapshot_name == "snapshot"
 
 
 def test_save_html_init_from_json_string():
@@ -623,13 +623,13 @@ def test_save_html_init_from_json_string():
     Function to test initialization of Save HTML object from json string
     """
     command_json = (
-        '{"command_name": "save_html", "params": {"snap_shot_name": "snapshot"}}'
+        '{"command_name": "save_html", "params": {"snapshot_name": "snapshot"}}'
     )
     save_html = SaveHtml.init_from_json_string(command_json)
     assert save_html.command_name == "save_html"
-    assert save_html.params == {"snap_shot_name": "snapshot"}
+    assert save_html.params == {"snapshot_name": "snapshot"}
     assert save_html.file_name == "body.txt"
-    assert save_html.snap_shot_name == "snapshot"
+    assert save_html.snapshot_name == "snapshot"
 
 
 @pytest.fixture

@@ -2,10 +2,11 @@
 This Module is in charge of defining commands that are enacted by the agent
 """
 
-import json
-import typing
-import os
 import base64
+import json
+import os
+import typing
+import uuid
 
 
 class Node:
@@ -17,21 +18,28 @@ class Node:
     """
 
     def __init__(
-        self, x_path: str, node_type: str, node_id: str, attributes: dict[str, str]
+            self,
+            x_path: str,
+            node_type: str,
+            node_id: str,
+            attributes: dict[str, str],
+            css: dict[str, str] = None
     ):
         """
         Initializes a Node
 
-        :param x_path: The path to the node in the html document
-        :param node_type: states the type of the node (element, text, ...)
-        :param node_id: the unique id of the node in the document
-        :param attributes: the html attributes (alt, id, ...)
+        :param _x_path: The path to the node in the html document
+        :param _node_type: states the type of the node (element, text, ...)
+        :param _node_id: the unique id of the node in the document
+        :param _attributes: the html attributes (alt, id, ...)
+        :param _css: the css attributes that may be present in the node
         """
 
-        self.x_path = x_path
-        self.type = node_type
-        self.id = node_id  # pylint: disable=invalid-name
-        self.attributes = attributes
+        self._x_path = x_path
+        self._type = node_type
+        self._id = node_id  # pylint: disable=invalid-name
+        self._attributes = attributes
+        self._css = css
 
     @property
     def tag(self) -> str:
@@ -39,12 +47,12 @@ class Node:
         The tag of the Node if it is a html element
         :return: the tag name
         """
-        if self.type != "Element":
+        if self._type != "Element":
             raise TypeError(
-                f"only nodes of type element have tags. this node is of type {self.type}"
+                f"only nodes of type element have tags. this node is of type {self._type}"
             )
 
-        tail = os.path.split(self.x_path)[-1]
+        tail = os.path.split(self._x_path)[-1]
 
         if "[" in tail:
             tail = tail.split("[")[0]
@@ -63,7 +71,29 @@ class Node:
             data_dict["type"],
             data_dict["id"],
             data_dict["attributes"],
+            data_dict["css_styles"] if data_dict["css_styles"] else None
         )
+
+
+class BrowserImage:
+
+    def __init__(self, image_path: str):
+        self._image_path = image_path
+
+    @property
+    def byte_string(self):
+        with open(self._image_path, "rb") as file:
+            return base64.b64encode(file.read()).decode("utf-8")
+
+
+class BrowserHtml:
+
+    def __init__(self, html_path: str):
+        self._html_path = html_path
+
+    def __str__(self):
+        with open(self._html_path, "r") as f:
+            return f.read()
 
 
 class Command:
@@ -72,7 +102,7 @@ class Command:
     """
 
     def __init__(
-        self, command_type: str, command_name: str, params: dict[str, typing.Any]
+            self, command_type: str, command_name: str, params: dict[str, typing.Any]
     ):
         """
         Initializes a parent command
@@ -350,7 +380,7 @@ class BrowserFile(BrowserCommand):
     """
 
     def __init__(
-        self, command_name: str, params: dict, file_name: str, snap_shot_name: str
+            self, command_name: str, params: dict, file_name: str, snapshot_name: str
     ):
         """
         Initializes a browser file command
@@ -358,13 +388,13 @@ class BrowserFile(BrowserCommand):
         :param command_name: The name of the command
         :param params: the properties of the command as a dictionary
         :param file_name: the name of the file being written to
-        :param snap_shot_name: the name of the snapshot folder to save
+        :param snapshot_name: the name of the snapshot folder to save
         the data too
         """
         self.file_name = file_name
-        self.snap_shot_name = snap_shot_name
+        self.snapshot_name = snapshot_name
 
-        params["snap_shot_name"] = snap_shot_name
+        params["snapshot_name"] = snapshot_name
 
         super().__init__(command_name, params)
 
@@ -376,7 +406,7 @@ class BrowserFile(BrowserCommand):
         :return: The saved file path
         """
         return os.path.join(
-            "./resources", "snapshots", self.snap_shot_name, self.file_name
+            "./resources", "snapshots", self.snapshot_name, self.file_name
         )
 
     @property
@@ -394,14 +424,14 @@ class FullPageScreenshot(BrowserFile):
     A command that takes a screenshot of the entire page
     """
 
-    def __init__(self, quality: int, name: str, snap_shot_name: str):
+    def __init__(self, quality: int, name: str, snapshot_name: str):
         """
         Initializes a FullPageScreenshot command
 
         :param quality: The screenshot quality.
         The higher, the better
         :param name: name of the screenshot file
-        :param snap_shot_name: what snapshot folder to save too
+        :param snapshot_name: what snapshot folder to save too
         """
 
         super().__init__(
@@ -411,7 +441,7 @@ class FullPageScreenshot(BrowserFile):
                 "name": name,
             },
             name,
-            snap_shot_name,
+            snapshot_name,
         )
 
         self.quality = quality
@@ -428,7 +458,7 @@ class FullPageScreenshot(BrowserFile):
         return cls(
             command_dict["params"]["quality"],
             command_dict["params"]["name"],
-            command_dict["params"]["snap_shot_name"],
+            command_dict["params"]["snapshot_name"],
         )
 
     @classmethod
@@ -451,7 +481,7 @@ class FullPageScreenshot(BrowserFile):
         """
 
         return os.path.join(
-            "./resources", "snapshots", self.snap_shot_name, "images", self.file_name
+            "./resources", "snapshots", self.snapshot_name, "images", self.file_name
         )
 
 
@@ -460,14 +490,14 @@ class ElementScreenShot(BrowserFile):
     A command that takes a screenshot of a particular element
     """
 
-    def __init__(self, scale: int, selector: str, name: str, snap_shot_name: str):
+    def __init__(self, scale: int, selector: str, name: str, snapshot_name: str):
         """
         Initializes a ElementScreenShot command
 
         :param scale: The size and quality of the image
         :param selector: the xpath selector used to capture the image
         :param name: the name of the image file that will be written in
-        :param snap_shot_name: the snapshot folder to save the image too
+        :param snapshot_name: the snapshot folder to save the image too
         """
         super().__init__(
             "element_screenshot",
@@ -475,10 +505,10 @@ class ElementScreenShot(BrowserFile):
                 "scale": scale,
                 "name": name,
                 "selector": selector,
-                "snap_shot_name": snap_shot_name,
+                "snapshot_name": snapshot_name,
             },
             name,
-            snap_shot_name,
+            snapshot_name,
         )
 
         self.scale = scale
@@ -495,7 +525,7 @@ class ElementScreenShot(BrowserFile):
             command_dict["params"]["scale"],
             command_dict["params"]["selector"],
             command_dict["params"]["name"],
-            command_dict["params"]["snap_shot_name"],
+            command_dict["params"]["snapshot_name"],
         )
 
     @classmethod
@@ -517,7 +547,7 @@ class ElementScreenShot(BrowserFile):
         :return: The saved file path
         """
         return os.path.join(
-            "./resources", "snapshots", self.snap_shot_name, "images", self.file_name
+            "./resources", "snapshots", self.snapshot_name, "images", self.file_name
         )
 
 
@@ -526,12 +556,12 @@ class CollectNodes(BrowserFile):
     This Command collects element nodes from a webpage
     """
 
-    def __init__(self, selector: str, snap_shot_name: str, wait_ready=False):
+    def __init__(self, selector: str, snapshot_name: str, wait_ready=False):
         """
         Initializes a CollectNodes command
 
         :param selector: The css selector that represents the section you want to extract
-        :param snap_shot_name: the folder to write the data to
+        :param snapshot_name: the folder to write the data to
         :param wait_ready: whether to wait for the element to appear
         """
         super().__init__(
@@ -539,10 +569,10 @@ class CollectNodes(BrowserFile):
             {
                 "wait_ready": wait_ready,
                 "selector": selector,
-                "snap_shot_name": snap_shot_name,
+                "snapshot_name": snapshot_name,
             },
             "nodeData.json",
-            snap_shot_name,
+            snapshot_name,
         )
 
         self.wait_ready = wait_ready
@@ -558,7 +588,7 @@ class CollectNodes(BrowserFile):
         """
         return cls(
             command_dict["params"]["selector"],
-            command_dict["params"]["snap_shot_name"],
+            command_dict["params"]["snapshot_name"],
             command_dict["params"]["wait_ready"],
         )
 
@@ -600,14 +630,14 @@ class SaveHtml(BrowserFile):
     Saves HTML to a file
     """
 
-    def __init__(self, snap_shot_name: str):
+    def __init__(self, snapshot_name: str):
         """
         Initializes a CollectNodes command
 
-        :param snap_shot_name: The snapshot to save the html too
+        :param snapshot_name: The snapshot to save the html too
         """
         super().__init__(
-            "save_html", {"snap_shot_name": snap_shot_name}, "body.txt", snap_shot_name
+            "save_html", {"snapshot_name": snapshot_name}, "body.txt", snapshot_name
         )
 
     @classmethod
@@ -618,7 +648,7 @@ class SaveHtml(BrowserFile):
         :param command_dict: the dictionary representation of the command
         :return: a SaveHtml object
         """
-        return cls(command_dict["params"]["snap_shot_name"])
+        return cls(command_dict["params"]["snapshot_name"])
 
     @classmethod
     def init_from_json_string(cls, command: str):
@@ -722,3 +752,113 @@ def move_file(command: BrowserFile, new_path):
 
     with open(os.path.join(new_path, f_name), "wb") as file2:
         file2.write(f_bytes)
+
+
+class IterateHtml(BrowserCommand):
+    """
+    Saves snapshots of a webpage over points in time
+    """
+
+    def __init__(self,
+                 iterate_limit: int,
+                 save_html: bool,
+                 save_node: bool,
+                 save_full_page_image: bool,
+                 pause_time: int = 5000,
+                 starting_snapshot: int = 0,
+                 snapshot_name: str = "snapshot"):
+        """
+        Initializes an Iterate Html object
+
+        :param iterate_limit: the max amount of snapshot iterations that can occur
+        :param pause_time: the time to sleep between each iteration
+        :param starting_snapshot: the snapshot number to start with
+        :param snapshot_name: the name of the snapshot directories
+        :param save_html: saves the html of the webpage at that point in time
+        :param save_node: save the nodes of the snapshot at that time
+        :param save_full_page_image: save a screenshot of the entire webpage at that time
+        """
+
+        uid_str = "bench_" + str(uuid.uuid4()).replace("-", "")
+        self._folder_prefix = snapshot_name + "_" + uid_str
+        self._has_nodes = save_node
+        self._has_html = save_html
+        self._has_image = save_full_page_image
+
+        super().__init__(
+            command_name="iterate_html",
+            params={
+                "iter_limit": iterate_limit,
+                "pause_time": pause_time,
+                "starting_snapshot": starting_snapshot,
+                "snapshot_name": self._folder_prefix,
+                "save_html": save_html,
+                "save_node": save_node,
+                "save_full_page_image": save_full_page_image
+            })
+
+    @property
+    def exists(self) -> bool:
+        """
+        whether a snapshots exist or not
+        :return:
+        """
+
+        return len(self) > 0
+
+    def _collect_resources(self) -> filter:
+        dir_list = os.listdir("./resources/snapshots")
+        return filter(lambda x: x.startswith(self._folder_prefix), dir_list)
+
+    def __len__(self) -> int:
+        """
+        :return: Returns the amount of snapshots takes
+        """
+        if not os.path.isdir("./resources/snapshots"):
+            raise NotADirectoryError("snapshots have not been saved")
+
+        return len(list(self._collect_resources()))
+
+    def __getitem__(self, item: int):
+        """
+        TODO: Make a response obejct with all the specific types present
+        update node map
+        finish the this method and make this iterable
+        based
+        :param item: the index of the item you wish to acquire
+        :return:
+        """
+
+        if len(self) < 0:
+            raise NotADirectoryError("snapshots have not been saved")
+
+        return list(self._collect_resources())[item]
+
+    @classmethod
+    def init_from_dict(cls, command_dict: dict[str, typing.Any]):
+        """
+        Loads the Iterate Html object from a dictionary
+
+        :param command_dict:
+        :return: an IterateHtml object
+        """
+        return cls(
+            command_dict["iter_limt"],
+            command_dict["save_html"],
+            command_dict["save_node"],
+            command_dict["save_full_page_image"],
+            pause_time=command_dict["pause_time"],
+            starting_snapshot=command_dict["starting_snapshot"],
+            snapshot_name=command_dict["snapshot_name"]
+        )
+
+    @classmethod
+    def init_from_json_string(cls, command: str):
+        """
+        Loads the Iterate Html command from a json string
+
+        :param command: The string representation of the command
+        :return: a IterateHtml Object
+        """
+        command_dict = json.loads(command)
+        return Click.init_from_dict(command_dict)

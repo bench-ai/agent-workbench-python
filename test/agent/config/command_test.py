@@ -8,18 +8,18 @@ import pytest
 from agent.config.command import (
     Command,
     LLMCommand,
-    Standard,
-    Multimodal,
-    Assistant,
+    _Standard,
+    _Multimodal,
+    _Assistant,
     BrowserCommand,
-    Navigate,
+    _Navigate,
     BrowserFile,
-    FullPageScreenshot,
-    ElementScreenShot,
-    CollectNodes,
-    SaveHtml,
-    Sleep,
-    Click,
+    _FullPageScreenshot,
+    _ElementScreenShot,
+    _CollectNodes,
+    _SaveHtml,
+    _Sleep,
+    _Click,
     move_file,
 )
 
@@ -116,7 +116,7 @@ def test_standard_init():
     """
     Function to test initialization of Standard LLM Command
     """
-    standard_command = Standard("user", "Hello, world!")
+    standard_command = _Standard("user", "Hello, world!")
     assert standard_command.role == "user"
     assert standard_command.content == "Hello, world!"
 
@@ -125,7 +125,7 @@ def test_standard_init_from_dict():
     """
     Function to test initialization of Standard LLM Command from dictionary
     """
-    standard_command = Standard.init_from_dict(
+    standard_command = _Standard.init_from_dict(
         {"message": {"role": "user", "content": "Hello"}}
     )
     assert standard_command.role == "user"
@@ -136,7 +136,7 @@ def test_standard_set_role():
     """
     Function to test set role of Standard LLM Command
     """
-    standard_command = Standard("", "Hello, world!")
+    standard_command = _Standard("", "Hello, world!")
     standard_command.set_role("user")
     assert standard_command.role == "user"
 
@@ -145,7 +145,7 @@ def test_standard_set_content():
     """
     Function to test set content of Standard LLM Command
     """
-    standard_command = Standard("user", "")
+    standard_command = _Standard("user", "")
     standard_command.set_content("Hello")
     assert standard_command.content == "Hello"
 
@@ -168,7 +168,7 @@ def test_multimodal_init():
     """
     Function to test initialization of Multimodal LLM Command
     """
-    multimodal_command = Multimodal("user")
+    multimodal_command = _Multimodal("user")
     assert multimodal_command.role == "user"
     assert not multimodal_command.content
 
@@ -177,7 +177,7 @@ def test_multimodal_init_from_dict():
     """
     Function to test initialization of Multimodal LLM Command from dictionary
     """
-    multimodal_command = Multimodal.init_from_dict(multimodal_command_data)
+    multimodal_command = _Multimodal.init_from_dict(multimodal_command_data)
     assert multimodal_command.role == "user"
     assert len(multimodal_command.content) == 2
     assert multimodal_command.content[0]["type"] == "text"
@@ -193,7 +193,7 @@ def test_multimodal_set_role():
     """
     Function to test set role of Multimodal LLM Command
     """
-    multimodal_command = Multimodal("")
+    multimodal_command = _Multimodal("")
     multimodal_command.set_role("user")
     assert multimodal_command.role == "user"
 
@@ -202,7 +202,7 @@ def test_multimodal_add_content_text():
     """
     Function to test add content of Multimodal LLM Command
     """
-    multimodal_command = Multimodal("user")
+    multimodal_command = _Multimodal("user")
     multimodal_command.add_content("text", "Hello")
     assert len(multimodal_command.content) == 1
     assert multimodal_command.content[0]["type"] == "text"
@@ -213,7 +213,7 @@ def test_multimodal_add_content_image_url():
     """
     Function to test add content of Multimodal LLM Command
     """
-    multimodal_command = Multimodal("user")
+    multimodal_command = _Multimodal("user")
     multimodal_command.add_content("image_url", "https://example.com/image.jpg")
     assert len(multimodal_command.content) == 1
     assert multimodal_command.content[0]["type"] == "image_url"
@@ -233,7 +233,7 @@ def test_assistant_init():
     """
     Function to test initialization of Assistant LLM Command
     """
-    assistant_command = Assistant("assistant", "Hello, how can I assist you?")
+    assistant_command = _Assistant("assistant", "Hello, how can I assist you?")
     assert assistant_command.role == "assistant"
     assert assistant_command.content == "Hello, how can I assist you?"
 
@@ -242,7 +242,7 @@ def test_assistant_init_from_dict():
     """
     Function to test initialization of Assistant LLM Command from dictionary
     """
-    assistant_command = Assistant.init_from_dict(assistant_command_data)
+    assistant_command = _Assistant.init_from_dict(assistant_command_data)
     assert assistant_command.role == "assistant"
     assert assistant_command.content == "Hello, how can I assist you?"
 
@@ -254,7 +254,7 @@ def test_navigate_init():
     """
     Function to test initialization of Navigate LLM Command
     """
-    navigate_command = Navigate("https://example.com")
+    navigate_command = _Navigate("https://example.com")
     assert navigate_command.url == "https://example.com"
     assert navigate_command.command_type == "browser"
     assert navigate_command.command_name == "open_web_page"
@@ -265,7 +265,7 @@ def test_navigate_init_from_dict():
     """
     Function to test initialization of Navigate LLM Command from dictionary
     """
-    navigate_command = Navigate.init_from_dict(navigate_command_data)
+    navigate_command = _Navigate.init_from_dict(navigate_command_data)
     assert navigate_command.url == "https://example.com"
     assert navigate_command.command_type == "browser"
     assert navigate_command.command_name == "open_web_page"
@@ -279,7 +279,7 @@ def test_navigate_init_from_json_string():
     navigate_command_json = (
         '{"command_name": "open_web_page", "params": {"url": "https://example.com"}}'
     )
-    navigate_command = Navigate.init_from_json_string(navigate_command_json)
+    navigate_command = _Navigate.init_from_json_string(navigate_command_json)
     assert navigate_command.url == "https://example.com"
     assert navigate_command.command_type == "browser"
     assert navigate_command.command_name == "open_web_page"
@@ -306,8 +306,8 @@ def test_browser_file_initialization(sample_browser_file):
         "param": "value",
         "snapshot_name": "snapshot",
     }
-    assert sample_browser_file.file_name == "test.txt"
-    assert sample_browser_file.snapshot_name == "snapshot"
+    assert sample_browser_file._file_name == "test.txt"
+    assert sample_browser_file._snapshot_name == "snapshot"
 
 
 def test_file_path(sample_browser_file):
@@ -327,8 +327,8 @@ def test_exists(sample_browser_file, tmpdir):
     file_path = tmpdir.join("test.txt")
     with open(file_path, "w", encoding="utf-8") as f:
         f.write("Test content")
-    sample_browser_file.file_name = "test.txt"
-    sample_browser_file.snapshot_name = str(tmpdir)
+    sample_browser_file._file_name = "test.txt"
+    sample_browser_file._snapshot_name = str(tmpdir)
     assert sample_browser_file.exists
 
 
@@ -338,8 +338,8 @@ def test_not_exists(sample_browser_file, tmpdir):
     :param sample_browser_file: A BrowserFile object
     :param tmpdir: A temporary directory
     """
-    sample_browser_file.file_name = "nonexistent.txt"
-    sample_browser_file.snapshot_name = str(tmpdir)
+    sample_browser_file._file_name = "nonexistent.txt"
+    sample_browser_file._snapshot_name = str(tmpdir)
     assert not sample_browser_file.exists
 
 
@@ -348,7 +348,7 @@ def sample_full_page_screenshot():
     """
     Function to create sample full-page screenshot fixture for BrowserFile tests
     """
-    return FullPageScreenshot(90, "full_page_screenshot.png", "snapshot")
+    return _FullPageScreenshot(90, "full_page_screenshot.png", "snapshot")
 
 
 def test_full_page_screenshot_initialization(sample_full_page_screenshot):
@@ -362,8 +362,8 @@ def test_full_page_screenshot_initialization(sample_full_page_screenshot):
         "name": "full_page_screenshot.png",
         "snapshot_name": "snapshot",
     }
-    assert sample_full_page_screenshot.file_name == "full_page_screenshot.png"
-    assert sample_full_page_screenshot.snapshot_name == "snapshot"
+    assert sample_full_page_screenshot._file_name == "full_page_screenshot.png"
+    assert sample_full_page_screenshot._snapshot_name == "snapshot"
 
 
 def test_full_page_screenshot_file_path(sample_full_page_screenshot):
@@ -389,15 +389,15 @@ def test_full_page_screenshot_init_from_dict():
             "snapshot_name": "snapshot",
         },
     }
-    full_page_screenshot = FullPageScreenshot.init_from_dict(command_dict)
+    full_page_screenshot = _FullPageScreenshot.init_from_dict(command_dict)
     assert full_page_screenshot.command_name == "full_page_screenshot"
     assert full_page_screenshot.params == {
         "quality": 90,
         "name": "full_page_screenshot.png",
         "snapshot_name": "snapshot",
     }
-    assert full_page_screenshot.file_name == "full_page_screenshot.png"
-    assert full_page_screenshot.snapshot_name == "snapshot"
+    assert full_page_screenshot._file_name == "full_page_screenshot.png"
+    assert full_page_screenshot._snapshot_name == "snapshot"
 
 
 def test_full_page_screenshot_init_from_json_string():
@@ -410,15 +410,15 @@ def test_full_page_screenshot_init_from_json_string():
         '"name": "full_page_screenshot.png", '
         '"snapshot_name": "snapshot"}}'
     )
-    full_page_screenshot = FullPageScreenshot.init_from_json_string(command_json)
+    full_page_screenshot = _FullPageScreenshot.init_from_json_string(command_json)
     assert full_page_screenshot.command_name == "full_page_screenshot"
     assert full_page_screenshot.params == {
         "quality": 90,
         "name": "full_page_screenshot.png",
         "snapshot_name": "snapshot",
     }
-    assert full_page_screenshot.file_name == "full_page_screenshot.png"
-    assert full_page_screenshot.snapshot_name == "snapshot"
+    assert full_page_screenshot._file_name == "full_page_screenshot.png"
+    assert full_page_screenshot._snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -426,7 +426,7 @@ def sample_element_screenshot():
     """
     Function to create sample element screenshot fixture for BrowserFile tests
     """
-    return ElementScreenShot(
+    return _ElementScreenShot(
         2, "//div[@id='element']", "element_screenshot.png", "snapshot"
     )
 
@@ -443,8 +443,8 @@ def test_element_screenshot_initialization(sample_element_screenshot):
         "selector": "//div[@id='element']",
         "snapshot_name": "snapshot",
     }
-    assert sample_element_screenshot.file_name == "element_screenshot.png"
-    assert sample_element_screenshot.snapshot_name == "snapshot"
+    assert sample_element_screenshot._file_name == "element_screenshot.png"
+    assert sample_element_screenshot._snapshot_name == "snapshot"
 
 
 def test_element_screenshot_file_path(sample_element_screenshot):
@@ -471,7 +471,7 @@ def test_element_screenshot_init_from_dict():
             "snapshot_name": "snapshot",
         },
     }
-    element_screenshot = ElementScreenShot.init_from_dict(command_dict)
+    element_screenshot = _ElementScreenShot.init_from_dict(command_dict)
     assert element_screenshot.command_name == "element_screenshot"
     assert element_screenshot.params == {
         "scale": 2,
@@ -479,8 +479,8 @@ def test_element_screenshot_init_from_dict():
         "selector": "//div[@id='element']",
         "snapshot_name": "snapshot",
     }
-    assert element_screenshot.file_name == "element_screenshot.png"
-    assert element_screenshot.snapshot_name == "snapshot"
+    assert element_screenshot._file_name == "element_screenshot.png"
+    assert element_screenshot._snapshot_name == "snapshot"
 
 
 def test_element_screenshot_init_from_json_string():
@@ -494,7 +494,7 @@ def test_element_screenshot_init_from_json_string():
         '"selector": "//div[@id=\'element\']", '
         '"snapshot_name": "snapshot"}}'
     )
-    element_screenshot = ElementScreenShot.init_from_json_string(command_json)
+    element_screenshot = _ElementScreenShot.init_from_json_string(command_json)
     assert element_screenshot.command_name == "element_screenshot"
     assert element_screenshot.params == {
         "scale": 2,
@@ -502,8 +502,8 @@ def test_element_screenshot_init_from_json_string():
         "selector": "//div[@id='element']",
         "snapshot_name": "snapshot",
     }
-    assert element_screenshot.file_name == "element_screenshot.png"
-    assert element_screenshot.snapshot_name == "snapshot"
+    assert element_screenshot._file_name == "element_screenshot.png"
+    assert element_screenshot._snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -511,7 +511,7 @@ def sample_collect_nodes():
     """
     Function to create sample collect nodes fixture for BrowserFile tests
     """
-    return CollectNodes("//div[@class='container']", "snapshot")
+    return _CollectNodes("//div[@class='container']", "snapshot")
 
 
 def test_collect_nodes_initialization(sample_collect_nodes):
@@ -525,8 +525,8 @@ def test_collect_nodes_initialization(sample_collect_nodes):
         "snapshot_name": "snapshot",
         "wait_ready": False,
     }
-    assert sample_collect_nodes.file_name == "nodeData.json"
-    assert sample_collect_nodes.snapshot_name == "snapshot"
+    assert sample_collect_nodes._file_name == "nodeData.json"
+    assert sample_collect_nodes._snapshot_name == "snapshot"
 
 
 def test_collect_nodes_file_path(sample_collect_nodes):
@@ -551,15 +551,15 @@ def test_collect_nodes_init_from_dict():
             "wait_ready": False,
         },
     }
-    collect_nodes = CollectNodes.init_from_dict(command_dict)
+    collect_nodes = _CollectNodes.init_from_dict(command_dict)
     assert collect_nodes.command_name == "collect_nodes"
     assert collect_nodes.params == {
         "selector": "//div[@class='container']",
         "snapshot_name": "snapshot",
         "wait_ready": False,
     }
-    assert collect_nodes.file_name == "nodeData.json"
-    assert collect_nodes.snapshot_name == "snapshot"
+    assert collect_nodes._file_name == "nodeData.json"
+    assert collect_nodes._snapshot_name == "snapshot"
 
 
 def test_collect_nodes_init_from_json_string():
@@ -572,15 +572,15 @@ def test_collect_nodes_init_from_json_string():
         '"params": {"selector": "//div[@class=\'container\']", '
         '"snapshot_name": "snapshot", "wait_ready": false}}'
     )
-    collect_nodes = CollectNodes.init_from_json_string(command_json)
+    collect_nodes = _CollectNodes.init_from_json_string(command_json)
     assert collect_nodes.command_name == "collect_nodes"
     assert collect_nodes.params == {
         "selector": "//div[@class='container']",
         "snapshot_name": "snapshot",
         "wait_ready": False,
     }
-    assert collect_nodes.file_name == "nodeData.json"
-    assert collect_nodes.snapshot_name == "snapshot"
+    assert collect_nodes._file_name == "nodeData.json"
+    assert collect_nodes._snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -589,7 +589,7 @@ def sample_save_html():
     Function to create sample save html fixture for BrowserFile tests
     :return: A Save HTML object
     """
-    return SaveHtml("snapshot")
+    return _SaveHtml("snapshot")
 
 
 def test_save_html_initialization(sample_save_html):
@@ -599,8 +599,8 @@ def test_save_html_initialization(sample_save_html):
     """
     assert sample_save_html.command_name == "save_html"
     assert sample_save_html.params == {"snapshot_name": "snapshot"}
-    assert sample_save_html.file_name == "body.txt"
-    assert sample_save_html.snapshot_name == "snapshot"
+    assert sample_save_html._file_name == "body.txt"
+    assert sample_save_html._snapshot_name == "snapshot"
 
 
 def test_save_html_init_from_dict():
@@ -611,11 +611,11 @@ def test_save_html_init_from_dict():
         "command_name": "save_html",
         "params": {"snapshot_name": "snapshot"},
     }
-    save_html = SaveHtml.init_from_dict(command_dict)
+    save_html = _SaveHtml.init_from_dict(command_dict)
     assert save_html.command_name == "save_html"
     assert save_html.params == {"snapshot_name": "snapshot"}
-    assert save_html.file_name == "body.txt"
-    assert save_html.snapshot_name == "snapshot"
+    assert save_html._file_name == "body.txt"
+    assert save_html._snapshot_name == "snapshot"
 
 
 def test_save_html_init_from_json_string():
@@ -625,11 +625,11 @@ def test_save_html_init_from_json_string():
     command_json = (
         '{"command_name": "save_html", "params": {"snapshot_name": "snapshot"}}'
     )
-    save_html = SaveHtml.init_from_json_string(command_json)
+    save_html = _SaveHtml.init_from_json_string(command_json)
     assert save_html.command_name == "save_html"
     assert save_html.params == {"snapshot_name": "snapshot"}
-    assert save_html.file_name == "body.txt"
-    assert save_html.snapshot_name == "snapshot"
+    assert save_html._file_name == "body.txt"
+    assert save_html._snapshot_name == "snapshot"
 
 
 @pytest.fixture
@@ -637,7 +637,7 @@ def sample_sleep():
     """
     Function to create sample sleep fixture for BrowserFile tests
     """
-    return Sleep(5)
+    return _Sleep(5)
 
 
 def test_sleep_initialization(sample_sleep):
@@ -655,7 +655,7 @@ def test_sleep_init_from_dict():
     Function to test initialization of Sleep object from dictionary
     """
     command_dict = {"command_name": "sleep", "params": {"seconds": 5}}
-    sleep = Sleep.init_from_dict(command_dict)
+    sleep = _Sleep.init_from_dict(command_dict)
     assert sleep.command_name == "sleep"
     assert sleep.params == {"seconds": 5}
     assert sleep.seconds == 5
@@ -666,7 +666,7 @@ def test_sleep_init_from_json_string():
     Function to test initialization of Sleep object from json string
     """
     command_json = '{"command_name": "sleep", "params": {"seconds": 5}}'
-    sleep = Sleep.init_from_json_string(command_json)
+    sleep = _Sleep.init_from_json_string(command_json)
     assert sleep.command_name == "sleep"
     assert sleep.params == {"seconds": 5}
     assert sleep.seconds == 5
@@ -678,7 +678,7 @@ def sample_click():
     Function to create sample click fixture for BrowserFile tests
     :return: A Click object
     """
-    return Click("//button[@id='submit']", "xpath")
+    return _Click("//button[@id='submit']", "xpath")
 
 
 def test_click_initialization(sample_click):
@@ -703,7 +703,7 @@ def test_click_init_from_dict():
         "command_name": "click",
         "params": {"selector": "//button[@id='submit']", "query_type": "xpath"},
     }
-    click = Click.init_from_dict(command_dict)
+    click = _Click.init_from_dict(command_dict)
     assert click.command_name == "click"
     assert click.params == {"selector": "//button[@id='submit']", "query_type": "xpath"}
     assert click.selector == "//button[@id='submit']"
@@ -719,7 +719,7 @@ def test_click_init_from_json_string():
         '"params": {"selector": "//button[@id=\'submit\']", '
         '"query_type": "xpath"}}'
     )
-    click = Click.init_from_json_string(command_json)
+    click = _Click.init_from_json_string(command_json)
     assert click.command_name == "click"
     assert click.params == {"selector": "//button[@id='submit']", "query_type": "xpath"}
     assert click.selector == "//button[@id='submit']"
@@ -758,7 +758,7 @@ class TestMoveFile:
         """
         new_path = os.path.join("resources", "snapshots", "moved")
         os.makedirs(new_path, exist_ok=True)
-        save_html_command = SaveHtml("snapshot")
+        save_html_command = _SaveHtml("snapshot")
         move_file(save_html_command, new_path)
         new_file_path = os.path.join(new_path, "body.txt")
         assert os.path.exists(new_file_path)

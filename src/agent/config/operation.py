@@ -5,19 +5,18 @@ This module handles processing operations which are sequences of commands
 import json
 import typing
 from typing import Union
+
 from .command import (
     Command,
-    Navigate,
-    FullPageScreenshot,
-    ElementScreenShot,
-    CollectNodes,
-    SaveHtml,
-    Sleep,
-    Click,
-    Standard,
-    Multimodal,
-    Assistant,
-    Tool,
+    _Navigate,
+    _FullPageScreenshot,
+    _ElementScreenShot,
+    _CollectNodes,
+    _Sleep,
+    _Click,
+    _Standard,
+    _Multimodal,
+    _Assistant, _SaveHtml,
 )
 
 
@@ -27,9 +26,9 @@ class Operation(list):
     """
 
     def __init__(
-        self,
-        op_type: str,
-        timeout: None | int = None,
+            self,
+            op_type: str,
+            timeout: None | int = None,
     ):
         """
         Initializes an Operation
@@ -88,12 +87,12 @@ class Operation(list):
         return json.dumps(self.to_dict())
 
 
-class BrowserOperations(Operation):
+class _BrowserOperations(Operation):
     """
     An operation that holds and processes browser commands
     """
 
-    def __init__(self, headless: bool = False, timeout: None | int = None):
+    def __init__(self, session_name: str, headless: bool = False, timeout: None | int = None):
         """
         Initializes a Browser Operation
 
@@ -103,6 +102,7 @@ class BrowserOperations(Operation):
         super().__init__("browser", timeout)
 
         self.headless = headless
+        self._session_name = session_name
 
     def get_settings(self) -> dict:
         """
@@ -113,41 +113,63 @@ class BrowserOperations(Operation):
         settings["headless"] = self.headless
         return settings
 
-    @classmethod
-    def load(cls, data_dict: dict):
-        """
-        Constructs a Browser Operation based on a config dictionary
+    def add_navigate_command(self, url: str) -> _Navigate:
+        nav = _Navigate(url)
+        self.append(nav)
+        return nav
 
-        :param data_dict: A dictionary representing the config
-        :return: A BrowserOperation
-        """
-        browser_opts = cls(**data_dict["settings"])
+    def add_full_screenshot_command(self, quality: int, name: str, snapshot_name: str) -> _FullPageScreenshot:
+        fps = _FullPageScreenshot(self._session_name, quality, name, snapshot_name)
+        self.append(fps)
+        return fps
 
-        for command in data_dict["command_list"]:
+    def add_element_screenshot_command(
+            self,
+            scale: int,
+            selector: str,
+            name: str,
+            snapshot_name: str) -> _ElementScreenShot:
+        ecs = _ElementScreenShot(self._session_name, scale, selector, name, snapshot_name)
+        self.append(ecs)
+        return ecs
 
-            match command["command_name"]:
-                case "open_web_page":
-                    initialized_command = Navigate.init_from_dict(command)
-                case "full_page_screenshot":
-                    initialized_command = FullPageScreenshot.init_from_dict(command)
-                case "element_screenshot":
-                    initialized_command = ElementScreenShot.init_from_dict(command)
-                case "collect_nodes":
-                    initialized_command = CollectNodes.init_from_dict(command)
-                case "save_html":
-                    initialized_command = SaveHtml.init_from_dict(command)
-                case "sleep":
-                    initialized_command = Sleep.init_from_dict(command)
-                case "click":
-                    initialized_command = Click.init_from_dict(command)
-                case _:
-                    raise TypeError(
-                        f"{command['command_name']} is not a valid browser command"
-                    )
+    def add_collect_nodes(self,
+                          selector: str,
+                          snapshot_name: str,
+                          wait_ready: bool,
+                          recurse: bool = True,
+                          prepopulate: bool = True,
+                          get_styles: bool = True) -> _CollectNodes:
+        cn = _CollectNodes(
+            selector,
+            snapshot_name,
+            wait_ready,
+            self._session_name,
+            recurse,
+            prepopulate,
+            get_styles)
 
-            browser_opts.append(initialized_command)
+        self.append(cn)
+        return cn
 
-        return browser_opts
+    def add_html(self,
+                 snapshot_name: str) -> _SaveHtml:
+        cah = _SaveHtml(self._session_name, snapshot_name)
+        self.append(cah)
+        return cah
+
+    def add_sleep(self,
+                  sleep: int):
+        cs = _Sleep(sleep)
+        self.append(cs)
+        return cs
+
+    def add_click(self,
+                  selector: str,
+                  query_type: str):
+        cc = _Click(selector, query_type)
+        self.append(cc)
+        return cc
 
 
 class LLMSettings(dict):
@@ -156,7 +178,7 @@ class LLMSettings(dict):
     """
 
     def __init__(
-        self, name: Union[str, None] = None, api_key: Union[str, None] = None, **kwargs
+            self, name: Union[str, None] = None, api_key: Union[str, None] = None, **kwargs
     ):
         # pylint: disable=W0613
         """
@@ -180,11 +202,11 @@ class OpenAISettings(LLMSettings):
     """
 
     def __init__(
-        self,
-        name: Union[str, None] = None,
-        api_key: Union[str, None] = None,
-        model: Union[str, None] = None,
-        temperature: float = 1.0,
+            self,
+            name: Union[str, None] = None,
+            api_key: Union[str, None] = None,
+            model: Union[str, None] = None,
+            temperature: float = 1.0,
     ):
         """
         Initializes the OPENAI_Settings object
@@ -226,18 +248,19 @@ class OpenAISettings(LLMSettings):
         super().__setitem__(key, value)
 
 
-class LLMOperations(Operation):
+class _LLMOperations(Operation):
     """
     Subclass of Operations specifically designed for making requests for LLM Commands.
     """
 
     def __init__(  # pylint: disable=too-many-arguments
-        self,
-        try_limit: int,
-        timeout: int,
-        max_tokens: int,
-        llm_settings: list[LLMSettings],
-        workflow_type: str,
+            self,
+            try_limit: int,
+            timeout: int,
+            max_tokens: int,
+            llm_settings: list[LLMSettings],
+            workflow_type: str,
+            session_name: str,
     ):
         """
         Initializes the LLMOperations
@@ -250,6 +273,7 @@ class LLMOperations(Operation):
         :param llm_settings: a list of LLMSettings objects defining the settings
             for the different LLMs the user wants the agent to switch between
         :param workflow_type: the type of agentic workflow the user wants the agent to implement
+        :param session_name: the name of the session
         """
         super().__init__("llm", timeout)
         self.settings = {
@@ -259,7 +283,9 @@ class LLMOperations(Operation):
             "workflow": {"workflow_type": workflow_type},
         }
 
-    def get_settings(self):
+        self._session_name = session_name
+
+    def get_settings(self) -> dict:
         """
         gets the settings for the LLM Operations
         """
@@ -267,42 +293,17 @@ class LLMOperations(Operation):
         settings.update(self.settings)
         return settings
 
-    @classmethod
-    def load(cls, data_dict: dict):
-        """
-        takes in a python dictionary and identifies what type of
-        LLM Command is being described by the dictionary
-        appends an object of that type to a list of LLM Operations
+    def add_standard_command(self, role: str, content: str) -> _Standard:
+        command = _Standard(role, content)
+        self.append(command)
+        return command
 
-        :params data_dict: python dictionary representing an LLM Command
-        """
-        llm_opts = cls(
-            try_limit=data_dict["settings"]["try_limit"],
-            timeout=data_dict["settings"]["timeout"],
-            max_tokens=data_dict["settings"]["max_tokens"],
-            llm_settings=[
-                LLMSettings(**llm_setting)
-                for llm_setting in data_dict["settings"]["llm_settings"]
-            ],
-            workflow_type=data_dict["settings"]["workflow"]["workflow_type"],
-        )
+    def add_multimodal_command(self, role) -> _Multimodal:
+        command = _Multimodal(role)
+        self.append(command)
+        return command
 
-        for command in data_dict["command_list"]:
-
-            match command["message_type"]:
-                case "standard":
-                    initialized_command = Standard.init_from_dict(command)
-                case "multimodal":
-                    initialized_command = Multimodal.init_from_dict(command)
-                case "assistant":
-                    initialized_command = Assistant.init_from_dict(command)
-                case "tool":
-                    initialized_command = Tool.init_from_dict(command)
-                case _:
-                    raise TypeError(
-                        f"{command['command_name']} is not a valid LLM command"
-                    )
-
-            llm_opts.append(initialized_command)
-
-        return llm_opts
+    def add_assistant_command(self, role: str, content: str) -> _Assistant:
+        command = _Assistant(role, content)
+        self.append(command)
+        return command

@@ -5,12 +5,12 @@ Tests for operation.py
 import pytest
 from agent.config.operation import (
     Operation,
-    BrowserOperations,
+    _BrowserOperations,
     LLMSettings,
     OpenAISettings,
     LLMOperations,
 )
-from agent.config.command import Command, Navigate
+from agent.config.command import Command, _Navigate
 
 
 # pylint: disable= W0621
@@ -83,7 +83,7 @@ def browser_operation():
     Function that creates a browser operation fixture for operation tests
     :return: A BrowserOperations object
     """
-    return BrowserOperations()
+    return _BrowserOperations()
 
 
 def test_browser_operation_creation(browser_operation):
@@ -100,7 +100,7 @@ def test_browser_operation_append_valid_command(browser_operation):
     Function that tests the appending of a valid browser operation object
     :param browser_operation: A BrowserOperations object
     """
-    command = Navigate("https://example.com")
+    command = _Navigate("https://example.com")
     browser_operation.append(command)
     assert len(browser_operation) == 1
 
@@ -118,7 +118,7 @@ def test_get_settings_with_headless():
     Function that tests the getting settings of a
     browser operation object when headless is True
     """
-    browser_op = BrowserOperations(headless=True)
+    browser_op = _BrowserOperations(headless=True)
     assert browser_op.get_settings() == {"headless": True}
 
 
@@ -513,4 +513,4 @@ def test_llm_operation_load_with_invalid_command():
         ],
     }
     with pytest.raises(TypeError):
-        BrowserOperations.load(data_dict)
+        _BrowserOperations.load(data_dict)

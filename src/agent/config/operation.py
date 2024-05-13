@@ -16,7 +16,7 @@ from .command import (
     _Click,
     _Standard,
     _Multimodal,
-    _Assistant, _SaveHtml,
+    _Assistant, _SaveHtml, _IterateHtml,
 )
 
 
@@ -170,6 +170,27 @@ class _BrowserOperations(Operation):
         cc = _Click(selector, query_type)
         self.append(cc)
         return cc
+
+    def add_iterate_html(self,
+                         iterate_limit: int,
+                         save_html: bool,
+                         save_node: bool,
+                         save_full_page_image: bool,
+                         pause_time: int = 500,
+                         snapshot_name: str = "snapshot",
+                         image_quality=10):
+
+        ic = _IterateHtml(self._session_name,
+                          iterate_limit,
+                          save_html,
+                          save_node,
+                          save_full_page_image,
+                          pause_time,
+                          image_quality,
+                          snapshot_name)
+
+        self.append(ic)
+        return ic
 
 
 class LLMSettings(dict):

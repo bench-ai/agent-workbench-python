@@ -170,6 +170,8 @@ class Creator:
                 case "click":
                     browser_opts.add_click(command["params"]["selector"],
                                            command["params"]["query_type"])
+                case "iterate_html":
+                    browser_opts.add_iterate_html(**command["params"])
                 case _:
                     raise TypeError(
                         f"{command['command_name']} is not a valid browser command"

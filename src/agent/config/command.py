@@ -603,17 +603,18 @@ class _IterateHtml(BrowserCommand):
         def add_html(self, html_path):
             if os.path.exists(html_path):
                 self._html = html_path
-                return self
+            return self
 
         def add_nodes(self, node_path):
             if os.path.exists(node_path):
                 self._nodes = node_path
-                return self
+
+            return self
 
         def add_image(self, image_path):
             if os.path.exists(image_path):
                 self._image = image_path
-                return self
+            return self
 
         @property
         def html(self) -> BrowserHtml | None:
@@ -651,6 +652,7 @@ class _IterateHtml(BrowserCommand):
                  save_node: bool,
                  save_full_page_image: bool,
                  pause_time: int = 5000,
+                 image_quality: int = 10,
                  snapshot_name: str = "snapshot"):
         """
         Initializes an Iterate Html object
@@ -681,7 +683,8 @@ class _IterateHtml(BrowserCommand):
                 "snapshot_name": self._folder_prefix,
                 "save_html": save_html,
                 "save_node": save_node,
-                "save_full_page_image": save_full_page_image
+                "save_full_page_image": save_full_page_image,
+                "image_quality": image_quality
             })
 
     @property
@@ -704,7 +707,7 @@ class _IterateHtml(BrowserCommand):
             save_path = os.path.join(os.path.expanduser("~"), ".cache")
 
         full_path = os.path.join(
-            save_path, "sessions", self._session_name, "snapshots"
+            save_path, "benchai", "agent", "sessions", self._session_name, "snapshots"
         )
 
         return full_path
@@ -747,7 +750,7 @@ class _IterateHtml(BrowserCommand):
         if item < 0:
             raise IndexError("negative indexing is not supported")
 
-        prefix = f"{self._folder_prefix}-{item}"
+        prefix = f"{self._folder_prefix}_{item}"
         folder_path_filter = filter(lambda x: x.startswith(prefix), self._collect_resources())
         folder_path = list(folder_path_filter)[0]
 
@@ -755,7 +758,7 @@ class _IterateHtml(BrowserCommand):
         ret = self._IterateBuilder()
 
         ret = ret.add_nodes(os.path.join(full_folder_path, "nodeData.json"))
-        ret = ret.add_nodes(os.path.join(full_folder_path, "body.txt"))
-        ret = ret.add_nodes(os.path.join(full_folder_path, "images", "page_image.png"))
+        ret = ret.add_html(os.path.join(full_folder_path, "body.txt"))
+        ret = ret.add_image(os.path.join(full_folder_path, "images", "page_image.png"))
 
         return ret

@@ -47,16 +47,17 @@ class Conduit:
         """
         Runs the config
 
-        :param verbose: print the stdout
+        :param verbose: prints the stdout
         :return: the stdout
         """
         command_list = ["agent", "run"]
 
         config_dict = self.config.to_dict()
 
-        tf = tempfile.NamedTemporaryFile(suffix=".json")
+        tf = tempfile.NamedTemporaryFile(suffix=".json", mode="w+")
 
         json.dump(config_dict, tf)
+        tf.flush()
 
         command_list.append(tf.name)
         console_out = subprocess.run(

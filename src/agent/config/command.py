@@ -35,11 +35,11 @@ class Node:
         :param css: the css attributes that may be present in the node
         """
 
-        self._x_path = x_path
-        self._type = node_type
-        self._id = node_id  # pylint: disable=invalid-name
-        self._attributes = attributes
-        self._css = css
+        self.x_path = x_path
+        self.type = node_type
+        self.id = node_id  # pylint: disable=invalid-name
+        self.attributes = attributes
+        self.css = css
 
     @property
     def tag(self) -> str:
@@ -47,12 +47,12 @@ class Node:
         The tag of the Node if it is a html element
         :return: the tag name
         """
-        if self._type != "Element":
+        if self.type != "Element":
             raise TypeError(
-                f"only nodes of type element have tags. this node is of type {self._type}"
+                f"only nodes of type element have tags. this node is of type {self.type}"
             )
 
-        tail = os.path.split(self._x_path)[-1]
+        tail = os.path.split(self.x_path)[-1]
 
         if "[" in tail:
             tail = tail.split("[")[0]
@@ -83,7 +83,9 @@ class BrowserImage:
     @property
     def byte_string(self):
         with open(self._image_path, "rb") as file:
-            return base64.b64encode(file.read()).decode("utf-8")
+            b64 = base64.b64encode(file.read()).decode("utf-8")
+
+        return f"data:image/jpeg;base64,{b64}"
 
 
 class BrowserHtml:
@@ -327,10 +329,10 @@ class BrowserFile(BrowserCommand):
         if os.getenv("BENCHAI-SAVEDIR"):
             save_path = os.getenv("BENCHAI-SAVEDIR")
         else:
-            save_path = os.path.join(os.path.expanduser("~"), ".cache")
+            save_path = os.path.join(os.path.expanduser("~"), ".cache", "benchai")
 
         return os.path.join(
-            save_path, "sessions", self._session, "snapshots", self._snapshot_name, self._file_name
+            save_path, "agent", "sessions", self._session, "snapshots", self._snapshot_name, self._file_name
         )
 
     @property
@@ -374,6 +376,19 @@ class _FullPageScreenshot(BrowserFile):
 
         self.quality = quality
 
+    @property
+    def file_path(self) -> str:
+        """
+        Gets the path to the saved file
+
+        :return: The saved file path
+        """
+
+        head, tail = os.path.split(super().file_path)
+        head = os.path.join(head, "images")
+        head = os.path.join(head, tail)
+        return head
+
     def get_image(self) -> BrowserImage:
         if self.exists:
             return BrowserImage(self.file_path)
@@ -412,6 +427,19 @@ class _ElementScreenShot(BrowserFile):
 
         self.scale = scale
         self.file_name = name
+
+    @property
+    def file_path(self) -> str:
+        """
+        Gets the path to the saved file
+
+        :return: The saved file path
+        """
+
+        head, tail = os.path.split(super().file_path)
+        head = os.path.join(head, "images")
+        head = os.path.join(head, tail)
+        return head
 
     def get_image(self) -> BrowserImage:
         if self.exists:
@@ -500,9 +528,9 @@ class _SaveHtml(BrowserFile):
         )
 
     @property
-    def get_html(self):
+    def get_html(self) -> BrowserHtml:
         if not self.exists:
-            raise FileNotFoundError("html files do not exist")
+            raise FileNotFoundError("html file does not exist")
         return BrowserHtml(self.file_path)
 
 

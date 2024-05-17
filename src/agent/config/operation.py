@@ -3,7 +3,9 @@ This module handles processing operations which are sequences of commands
 """
 
 import json
+import os
 import typing
+import uuid
 from typing import Union
 
 from .command import (
@@ -16,7 +18,7 @@ from .command import (
     _Click,
     _Standard,
     _Multimodal,
-    _Assistant, _SaveHtml, _IterateHtml,
+    _Assistant, _SaveHtml, _IterateHtml, BrowserCommand,
 )
 
 
@@ -92,7 +94,12 @@ class _BrowserOperations(Operation):
     An operation that holds and processes browser commands
     """
 
-    def __init__(self, session_name: str, headless: bool = False, timeout: None | int = None):
+    def __init__(self,
+                 session_name: str,
+                 headless: bool = False,
+                 timeout: None | int = None,
+                 live=False,
+                 command_timeout: None | int = None, ):
         """
         Initializes a Browser Operation
 
@@ -103,6 +110,38 @@ class _BrowserOperations(Operation):
 
         self.headless = headless
         self._session_name = session_name
+        self._live = live
+        self._command_timeout = command_timeout
+
+    def _process(self, command: BrowserCommand) -> BrowserCommand:
+        if not self._live:
+            self.append(command)
+        else:
+            if os.getenv("BENCHAI-SAVEDIR"):
+                save_path = os.getenv("BENCHAI-SAVEDIR")
+            else:
+                save_path = os.path.join(os.path.expanduser("~"), ".cache", "benchai")
+
+            pth = os.path.join(
+                save_path, "agent", "sessions", self._session_name, "commands", str(uuid.uuid4()) + ".json.tmp"
+            )
+
+            with open(pth, "w") as f:
+                data_dict = {
+                    "type": "browser",
+                    "command_list": [
+                        command.to_dict(),
+                    ]
+                }
+
+                json.dump(data_dict, f)
+
+            final_pth = os.path.join(
+                save_path, "agent", "sessions", self._session_name, "commands", str(uuid.uuid4()) + ".json"
+            )
+
+            os.rename(pth, final_pth)
+        return command
 
     def get_settings(self) -> dict:
         """
@@ -114,9 +153,7 @@ class _BrowserOperations(Operation):
         return settings
 
     def add_navigate_command(self, url: str) -> _Navigate:
-        nav = _Navigate(url)
-        self.append(nav)
-        return nav
+        return self._process(_Navigate(url))
 
     def add_full_screenshot_command(self, quality: int, name: str, snapshot_name: str) -> _FullPageScreenshot:
         fps = _FullPageScreenshot(self._session_name, quality, name, snapshot_name)
@@ -179,7 +216,6 @@ class _BrowserOperations(Operation):
                          pause_time: int = 500,
                          snapshot_name: str = "snapshot",
                          image_quality=10):
-
         ic = _IterateHtml(self._session_name,
                           iterate_limit,
                           save_html,

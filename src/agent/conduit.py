@@ -2,8 +2,11 @@
 This module is in charge of sending and executing commands through the Agent CLI
 """
 import json
+import os
 import subprocess
 import tempfile
+import time
+import uuid
 
 from .config.creator import Creator
 
@@ -30,7 +33,7 @@ class Conduit:
         :return:
         """
         version = subprocess.run(
-            ["config", "version"], capture_output=True, text=True, check=True
+            ["agent", "version"], capture_output=True, text=True, check=True
         )
 
         response: str = version.stdout
@@ -42,6 +45,46 @@ class Conduit:
             return response
 
         raise ValueError("Agent CLI not found")
+
+    @staticmethod
+    def remove_session(session_id: str):
+        rem = subprocess.run(
+            ["agent", "session", "rm", session_id], capture_output=True, text=True, check=True
+        )
+
+        response: str = rem.stderr
+
+        if len(response) > 0:
+            raise EnvironmentError("Agent CLI not found")
+
+    @staticmethod
+    def remove_all():
+        rem = subprocess.run(
+            ["agent", "session", "-rf", "rm"], capture_output=True, text=True, check=True
+        )
+
+        response: str = rem.stderr
+
+        if len(response) > 0:
+            raise EnvironmentError("Agent CLI not found")
+
+    @staticmethod
+    def list_sessions() -> list[str]:
+        sess = subprocess.run(
+            ["agent", "session", "ls"], capture_output=True, text=True, check=True
+        )
+
+        response: str = sess.stdout
+        sess_list: list[str] = (response
+                                .replace("[", "")
+                                .replace("]", "")
+                                .replace("\n", "")
+                                .split(", "))
+
+        if sess_list[0] == "":
+            return []
+
+        return sess_list
 
     def run(self, verbose=False) -> str:
         """
@@ -72,3 +115,37 @@ class Conduit:
             print(console_out.stdout)
 
         return console_out.stdout
+
+
+class LiveConduit:
+
+    def __init__(self,
+                 config: Creator,
+                 session_lifetime: int,
+                 headless: bool = False,
+                 command_lifetime: str | bool = None):
+        self._session_lifetime = session_lifetime
+        self._headless = headless
+        self._command_lifetime = command_lifetime
+        self._config = config
+
+    def __enter__(self):
+        command_list = ["agent", "live", self._config.get_session_id(), str(self._session_lifetime)]
+        subprocess.Popen(
+            command_list
+        )
+
+        if os.getenv("BENCHAI-SAVEDIR"):
+            save_path = os.getenv("BENCHAI-SAVEDIR")
+        else:
+            save_path = os.path.join(os.path.expanduser("~"), ".cache", "benchai")
+
+        pth = os.path.join(
+            save_path, "agent", "sessions", self._config.get_session_id(), "commands"
+        )
+
+        while not os.path.isdir(pth):
+            time.sleep(1)
+
+    def __exit__(self, exception_type, exception_value, traceback):
+        print("exited")

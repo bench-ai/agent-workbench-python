@@ -4,7 +4,10 @@ from .operation import Operation, _BrowserOperations, _LLMOperations, LLMSetting
 
 class Creator:
 
-    def __init__(self, session_id: str | None = None):
+    def __init__(self,
+                 session_id: str | None = None,
+                 live: bool = False):
+
         self._session_id = ""
         if not session_id:
             self._session_id = str(uuid.uuid4())
@@ -12,9 +15,14 @@ class Creator:
             self._session_id = session_id
 
         self._operations: list[Operation] = []
+        self._live = live
 
     def get_session_id(self) -> str:
         return self._session_id
+
+    @property
+    def live(self) -> bool:
+        return self._live
 
     def reset(self, session_id: str | None = None):
         self._session_id = ""
@@ -52,7 +60,8 @@ class Creator:
         brow_op = _BrowserOperations(
             self._session_id,
             headless=headless,
-            timeout=timeout)
+            timeout=timeout,
+            live=self._live)
 
         self._operations.append(brow_op)
         return brow_op

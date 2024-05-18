@@ -8,6 +8,8 @@ import os
 import typing
 import uuid
 
+from agent.miscellaneous.paths import get_save_path
+
 
 class Node:
     """
@@ -293,6 +295,10 @@ class _Navigate(BrowserCommand):
         super().__init__("open_web_page", {"url": self.url})
 
 
+class CommandError(Exception):
+    pass
+
+
 class BrowserFile(BrowserCommand):
     """
     A Browser command that saves a file
@@ -342,6 +348,13 @@ class BrowserFile(BrowserCommand):
 
         :return: a boolean representing the file's existence
         """
+
+        err_path = os.path.join(get_save_path(), self._session, "err.txt")
+
+        if os.path.exists(err_path):
+            with open(err_path, "r") as f:
+                raise CommandError(f.read())
+
         return os.path.exists(self.file_path)
 
 
@@ -479,7 +492,7 @@ class _CollectNodes(BrowserFile):
                 "prepopulate": prepopulate,
                 "get_styles": get_styles
             },
-            "nodeData.json",
+            "nodes.json",
             snapshot_name,
             session_name
         )

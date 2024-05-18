@@ -18,8 +18,12 @@ from .command import (
     _Click,
     _Standard,
     _Multimodal,
-    _Assistant, _SaveHtml, _IterateHtml, BrowserCommand,
+    _Assistant,
+    _SaveHtml,
+    _IterateHtml, BrowserFile,
 )
+
+from ..miscellaneous.paths import get_live_session_path
 
 
 class Operation(list):
@@ -99,7 +103,7 @@ class _BrowserOperations(Operation):
                  headless: bool = False,
                  timeout: None | int = None,
                  live=False,
-                 command_timeout: None | int = None, ):
+                 command_timeout: None | int = None):
         """
         Initializes a Browser Operation
 
@@ -113,18 +117,19 @@ class _BrowserOperations(Operation):
         self._live = live
         self._command_timeout = command_timeout
 
-    def _process(self, command: BrowserCommand) -> BrowserCommand:
+    def _process(self,
+                 command:
+                 (_Navigate | _FullPageScreenshot | _SaveHtml | _CollectNodes | _ElementScreenShot | _Click | _Sleep),
+                 uid: uuid.UUID) -> (
+            _Navigate | _FullPageScreenshot | _SaveHtml | _CollectNodes | _ElementScreenShot | _Click | _Sleep):
         if not self._live:
             self.append(command)
         else:
-            if os.getenv("BENCHAI-SAVEDIR"):
-                save_path = os.getenv("BENCHAI-SAVEDIR")
-            else:
-                save_path = os.path.join(os.path.expanduser("~"), ".cache", "benchai")
 
-            pth = os.path.join(
-                save_path, "agent", "sessions", self._session_name, "commands", str(uuid.uuid4()) + ".json.tmp"
-            )
+            if self._exited():
+                raise ConnectionError("session has already exited")
+
+            pth = os.path.join(self.command_dir, str(uid) + ".json.tmp")
 
             with open(pth, "w") as f:
                 data_dict = {
@@ -136,12 +141,38 @@ class _BrowserOperations(Operation):
 
                 json.dump(data_dict, f)
 
-            final_pth = os.path.join(
-                save_path, "agent", "sessions", self._session_name, "commands", str(uuid.uuid4()) + ".json"
-            )
-
+            final_pth = os.path.join(self.command_dir, str(uid) + ".json")
             os.rename(pth, final_pth)
+
+            if isinstance(command, BrowserFile):
+                while not command.exists:
+                    pass
+
         return command
+
+    def _get_live_session_path(self, dir_name: str) -> str:
+        if not self._live:
+            raise NotADirectoryError(f"{dir_name} directory only exists for live sessions")
+
+        return os.path.join(
+            get_live_session_path(self._session_name),
+            dir_name
+        )
+
+    @property
+    def response_dir(self) -> str:
+        return self._get_live_session_path("responses")
+
+    @property
+    def command_dir(self) -> str:
+        return self._get_live_session_path("commands")
+
+    def _exited(self) -> bool:
+        pth = os.path.join(get_live_session_path(self._session_name), "exit.txt")
+        return os.path.exists(pth)
+
+    def _response_session_path(self, uid: uuid.UUID):
+        return self._session_name + "/" + "responses" + "/" + str(uid)
 
     def get_settings(self) -> dict:
         """
@@ -153,12 +184,12 @@ class _BrowserOperations(Operation):
         return settings
 
     def add_navigate_command(self, url: str) -> _Navigate:
-        return self._process(_Navigate(url))
+        uid = uuid.uuid4()
+        return self._process(_Navigate(url), uid)
 
     def add_full_screenshot_command(self, quality: int, name: str, snapshot_name: str) -> _FullPageScreenshot:
-        fps = _FullPageScreenshot(self._session_name, quality, name, snapshot_name)
-        self.append(fps)
-        return fps
+        uid = uuid.uuid4()
+        return self._process(_FullPageScreenshot(self._response_session_path(uid), quality, name, snapshot_name), uid)
 
     def add_element_screenshot_command(
             self,
@@ -166,9 +197,9 @@ class _BrowserOperations(Operation):
             selector: str,
             name: str,
             snapshot_name: str) -> _ElementScreenShot:
-        ecs = _ElementScreenShot(self._session_name, scale, selector, name, snapshot_name)
-        self.append(ecs)
-        return ecs
+        uid = uuid.uuid4()
+        return self._process(_ElementScreenShot(self._response_session_path(uid), scale, selector, name, snapshot_name),
+                             uid)
 
     def add_collect_nodes(self,
                           selector: str,
@@ -177,36 +208,37 @@ class _BrowserOperations(Operation):
                           recurse: bool = True,
                           prepopulate: bool = True,
                           get_styles: bool = True) -> _CollectNodes:
+
+        uid = uuid.uuid4()
         cn = _CollectNodes(
             selector,
             snapshot_name,
             wait_ready,
-            self._session_name,
+            self._response_session_path(uid),
             recurse,
             prepopulate,
             get_styles)
-
-        self.append(cn)
-        return cn
+        return self._process(cn, uid)
 
     def add_html(self,
                  snapshot_name: str) -> _SaveHtml:
-        cah = _SaveHtml(self._session_name, snapshot_name)
-        self.append(cah)
-        return cah
+
+        uid = uuid.uuid4()
+        cah = _SaveHtml(self._response_session_path(uid), snapshot_name)
+        return self._process(cah, uid)
 
     def add_sleep(self,
                   sleep: int):
         cs = _Sleep(sleep)
-        self.append(cs)
-        return cs
+        uid = uuid.uuid4()
+        return self._process(cs, uid)
 
     def add_click(self,
                   selector: str,
                   query_type: str):
         cc = _Click(selector, query_type)
-        self.append(cc)
-        return cc
+        uid = uuid.uuid4()
+        return self._process(cc, uid)
 
     def add_iterate_html(self,
                          iterate_limit: int,
@@ -216,6 +248,7 @@ class _BrowserOperations(Operation):
                          pause_time: int = 500,
                          snapshot_name: str = "snapshot",
                          image_quality=10):
+
         ic = _IterateHtml(self._session_name,
                           iterate_limit,
                           save_html,

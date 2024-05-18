@@ -1,5 +1,8 @@
+import json
+import os.path
 import uuid
 from .operation import Operation, _BrowserOperations, _LLMOperations, LLMSettings
+from ..miscellaneous.paths import get_live_session_path
 
 
 class Creator:
@@ -33,6 +36,31 @@ class Creator:
 
         self._operations = []
         return self
+
+    @property
+    def exited(self):
+        pth = os.path.join(get_live_session_path(self._session_id), "exit.txt")
+        return os.path.exists(pth)
+
+    def end_live_session(self):
+        if not self._live:
+            raise TypeError("Not a live session")
+
+        if self.exited:
+            raise EnvironmentError("live session is already killed")
+
+        exit_path = os.path.join(
+            get_live_session_path(self._session_id), "commands", str(uuid.uuid4()) + "exit.json.tmp")
+
+        save_path = os.path.join(
+            get_live_session_path(self._session_id), "commands", str(uuid.uuid4()) + "exit.json")
+
+        with open(exit_path, "w") as f:
+            json.dump({
+                "type": "exit",
+            }, f)
+
+        os.rename(exit_path, save_path)
 
     def new_llm_operation(self,
                           try_limit: int,
@@ -187,4 +215,3 @@ class Creator:
                     )
 
         self._operations.append(browser_opts)
-

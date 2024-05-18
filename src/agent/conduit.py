@@ -6,9 +6,9 @@ import os
 import subprocess
 import tempfile
 import time
-import uuid
 
 from .config.creator import Creator
+from .miscellaneous.paths import get_live_session_path
 
 
 class Conduit:
@@ -123,29 +123,37 @@ class LiveConduit:
                  config: Creator,
                  session_lifetime: int,
                  headless: bool = False,
-                 command_lifetime: str | bool = None):
+                 command_lifetime: int | None = None):
+
         self._session_lifetime = session_lifetime
         self._headless = headless
+
+        if command_lifetime:
+            if command_lifetime < 0:
+                raise ValueError("command lifetime must be greater than 0")
+
         self._command_lifetime = command_lifetime
         self._config = config
+        self.process = None
 
     def __enter__(self):
-        command_list = ["agent", "live", self._config.get_session_id(), str(self._session_lifetime)]
-        subprocess.Popen(
+        command_list = ["agent", "live"]
+        command_list += ["-h"] if self._headless else []
+        command_list += ["-life", str(self._command_lifetime)] if self._command_lifetime else []
+        command_list += [self._config.get_session_id(), str(self._session_lifetime)]
+
+        print(command_list)
+
+        self.process = subprocess.Popen(
             command_list
         )
 
-        if os.getenv("BENCHAI-SAVEDIR"):
-            save_path = os.getenv("BENCHAI-SAVEDIR")
-        else:
-            save_path = os.path.join(os.path.expanduser("~"), ".cache", "benchai")
-
         pth = os.path.join(
-            save_path, "agent", "sessions", self._config.get_session_id(), "commands"
+            get_live_session_path(self._config.get_session_id()), "commands"
         )
 
         while not os.path.isdir(pth):
             time.sleep(1)
 
     def __exit__(self, exception_type, exception_value, traceback):
-        print("exited")
+        self._config.end_live_session()

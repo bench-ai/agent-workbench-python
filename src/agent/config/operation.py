@@ -20,10 +20,11 @@ from .command import (
     _Multimodal,
     _Assistant,
     _SaveHtml,
-    _IterateHtml, BrowserFile,
+    _IterateHtml,
+    CommandError,
 )
 
-from ..miscellaneous.paths import get_live_session_path
+from ..miscellaneous.paths import get_live_session_path, get_save_path
 
 
 class Operation(list):
@@ -34,7 +35,9 @@ class Operation(list):
     def __init__(
             self,
             op_type: str,
+            session_name: str,
             timeout: None | int = None,
+            live=False
     ):
         """
         Initializes an Operation
@@ -50,6 +53,8 @@ class Operation(list):
 
         self.op_type = op_type
         self.timeout = timeout
+        self._session_name = session_name
+        self._live = live
 
     def append(self, command: Command):
         """
@@ -92,63 +97,9 @@ class Operation(list):
         """
         return json.dumps(self.to_dict())
 
-
-class _BrowserOperations(Operation):
-    """
-    An operation that holds and processes browser commands
-    """
-
-    def __init__(self,
-                 session_name: str,
-                 headless: bool = False,
-                 timeout: None | int = None,
-                 live=False,
-                 command_timeout: None | int = None):
-        """
-        Initializes a Browser Operation
-
-        :param headless: Sets if you wish to visually see the agent operate on the browser
-        :param timeout: the maxtime the browser operation can operate for
-        """
-        super().__init__("browser", timeout)
-
-        self.headless = headless
-        self._session_name = session_name
-        self._live = live
-        self._command_timeout = command_timeout
-
-    def _process(self,
-                 command:
-                 (_Navigate | _FullPageScreenshot | _SaveHtml | _CollectNodes | _ElementScreenShot | _Click | _Sleep),
-                 uid: uuid.UUID) -> (
-            _Navigate | _FullPageScreenshot | _SaveHtml | _CollectNodes | _ElementScreenShot | _Click | _Sleep):
-        if not self._live:
-            self.append(command)
-        else:
-
-            if self._exited():
-                raise ConnectionError("session has already exited")
-
-            pth = os.path.join(self.command_dir, str(uid) + ".json.tmp")
-
-            with open(pth, "w") as f:
-                data_dict = {
-                    "type": "browser",
-                    "command_list": [
-                        command.to_dict(),
-                    ]
-                }
-
-                json.dump(data_dict, f)
-
-            final_pth = os.path.join(self.command_dir, str(uid) + ".json")
-            os.rename(pth, final_pth)
-
-            if isinstance(command, BrowserFile):
-                while not command.exists:
-                    pass
-
-        return command
+    def _exited(self) -> bool:
+        pth = os.path.join(get_live_session_path(self._session_name), "exit.txt")
+        return os.path.exists(pth)
 
     def _get_live_session_path(self, dir_name: str) -> str:
         if not self._live:
@@ -167,12 +118,74 @@ class _BrowserOperations(Operation):
     def command_dir(self) -> str:
         return self._get_live_session_path("commands")
 
-    def _exited(self) -> bool:
-        pth = os.path.join(get_live_session_path(self._session_name), "exit.txt")
-        return os.path.exists(pth)
-
     def _response_session_path(self, uid: uuid.UUID):
         return self._session_name + "/" + "responses" + "/" + str(uid)
+
+    def _check_command_status(self, uid: uuid.UUID):
+        err_path = os.path.join(get_save_path(), self._response_session_path(uid), "err.txt")
+        success_path = os.path.join(get_save_path(), self._response_session_path(uid), "success.txt")
+
+        if os.path.exists(err_path):
+            with open(err_path, "r") as f:
+                raise CommandError(f.read())
+
+        return os.path.exists(success_path)
+
+    def _process(self,
+                 command: (
+                         _Navigate | _FullPageScreenshot | _SaveHtml | _CollectNodes | _ElementScreenShot | _Click | _Sleep),
+                 uid: uuid.UUID,
+                 command_type="browser") -> (
+            _Navigate | _FullPageScreenshot | _SaveHtml | _CollectNodes | _ElementScreenShot | _Click | _Sleep):
+
+        if not self._live:
+            self.append(command)
+        else:
+            if self._exited():
+                raise ConnectionError("session has already exited")
+
+            pth = os.path.join(self.command_dir, str(uid) + ".json.tmp")
+
+            with open(pth, "w") as f:
+                data_dict = {
+                    "type": command_type,
+                    "command_list": [
+                        command.to_dict(),
+                    ]
+                }
+
+                json.dump(data_dict, f)
+
+            final_pth = os.path.join(self.command_dir, str(uid) + ".json")
+            os.rename(pth, final_pth)
+
+            while not self._check_command_status(uid):
+                pass
+
+        return command
+
+
+class _BrowserOperations(Operation):
+    """
+    An operation that holds and processes browser commands
+    """
+
+    def __init__(self,
+                 session_name: str,
+                 headless: bool = False,
+                 timeout: None | int = None,
+                 live=False):
+        """
+        Initializes a Browser Operation
+
+        :param headless: Sets if you wish to visually see the agent operate on the browser
+        :param timeout: the maxtime the browser operation can operate for
+        """
+        super().__init__("browser", session_name, timeout, live=live)
+
+        self.headless = headless
+        self._session_name = session_name
+        self._live = live
 
     def get_settings(self) -> dict:
         """
@@ -185,11 +198,14 @@ class _BrowserOperations(Operation):
 
     def add_navigate_command(self, url: str) -> _Navigate:
         uid = uuid.uuid4()
-        return self._process(_Navigate(url), uid)
+        return super()._process(_Navigate(url), uid)
 
     def add_full_screenshot_command(self, quality: int, name: str, snapshot_name: str) -> _FullPageScreenshot:
         uid = uuid.uuid4()
-        return self._process(_FullPageScreenshot(self._response_session_path(uid), quality, name, snapshot_name), uid)
+        return super()._process(
+            _FullPageScreenshot(super()._response_session_path(uid), quality, name, snapshot_name),
+            uid
+        )
 
     def add_element_screenshot_command(
             self,
@@ -198,47 +214,47 @@ class _BrowserOperations(Operation):
             name: str,
             snapshot_name: str) -> _ElementScreenShot:
         uid = uuid.uuid4()
-        return self._process(_ElementScreenShot(self._response_session_path(uid), scale, selector, name, snapshot_name),
-                             uid)
+        return super()._process(
+            _ElementScreenShot(super()._response_session_path(uid), scale, selector, name, snapshot_name),
+            uid
+        )
 
     def add_collect_nodes(self,
                           selector: str,
                           snapshot_name: str,
-                          wait_ready: bool,
                           recurse: bool = True,
                           prepopulate: bool = True,
                           get_styles: bool = True) -> _CollectNodes:
-
         uid = uuid.uuid4()
         cn = _CollectNodes(
             selector,
             snapshot_name,
-            wait_ready,
-            self._response_session_path(uid),
+            super()._response_session_path(uid),
             recurse,
             prepopulate,
             get_styles)
-        return self._process(cn, uid)
+        return self._process(
+            cn, uid
+        )
 
     def add_html(self,
                  snapshot_name: str) -> _SaveHtml:
-
         uid = uuid.uuid4()
-        cah = _SaveHtml(self._response_session_path(uid), snapshot_name)
-        return self._process(cah, uid)
+        cah = _SaveHtml(super()._response_session_path(uid), snapshot_name)
+        return super()._process(cah, uid)
 
     def add_sleep(self,
                   sleep: int):
         cs = _Sleep(sleep)
         uid = uuid.uuid4()
-        return self._process(cs, uid)
+        return super()._process(cs, uid)
 
     def add_click(self,
                   selector: str,
                   query_type: str):
         cc = _Click(selector, query_type)
         uid = uuid.uuid4()
-        return self._process(cc, uid)
+        return super()._process(cc, uid)
 
     def add_iterate_html(self,
                          iterate_limit: int,
@@ -248,8 +264,7 @@ class _BrowserOperations(Operation):
                          pause_time: int = 500,
                          snapshot_name: str = "snapshot",
                          image_quality=10):
-
-        ic = _IterateHtml(self._session_name,
+        ic = _IterateHtml(super()._session_name,
                           iterate_limit,
                           save_html,
                           save_node,
@@ -257,6 +272,9 @@ class _BrowserOperations(Operation):
                           pause_time,
                           image_quality,
                           snapshot_name)
+
+        if super()._live:
+            raise TypeError("cannot use the iterate html command during a live session")
 
         self.append(ic)
         return ic
@@ -293,19 +311,17 @@ class OpenAISettings(LLMSettings):
 
     def __init__(
             self,
-            name: Union[str, None] = None,
             api_key: Union[str, None] = None,
             model: Union[str, None] = None,
             temperature: float = 1.0,
     ):
         """
         Initializes the OPENAI_Settings object
-        :param name: the name of the api
         :param api_key:  key for the api
         :param model: the specific OpenAI model the user wants to use (e.g., gpt-3.5-turbo)
         :param temperature: the temperature the user wants the model to use
         """
-        super().__init__(name, api_key)
+        super().__init__("OpenAI", api_key)
         if not isinstance(model, str):
             raise TypeError("Model must be a string.")
         if not isinstance(temperature, float):
@@ -314,7 +330,7 @@ class OpenAISettings(LLMSettings):
         self._allowed_keys = {"name", "api_key", "model", "temperature"}
         self.update(
             {
-                "name": name,
+                "name": "OpenAI",
                 "api_key": api_key,
                 "model": model,
                 "temperature": temperature,
@@ -349,8 +365,8 @@ class _LLMOperations(Operation):
             timeout: int,
             max_tokens: int,
             llm_settings: list[LLMSettings],
-            workflow_type: str,
             session_name: str,
+            live: bool = False
     ):
         """
         Initializes the LLMOperations
@@ -365,15 +381,43 @@ class _LLMOperations(Operation):
         :param workflow_type: the type of agentic workflow the user wants the agent to implement
         :param session_name: the name of the session
         """
-        super().__init__("llm", timeout)
+        super().__init__("llm", session_name, timeout, live=live)
         self.settings = {
             "try_limit": try_limit,
             "max_tokens": max_tokens,
             "llm_settings": llm_settings,
-            "workflow": {"workflow_type": workflow_type},
         }
 
         self._session_name = session_name
+
+    def execute(self) -> _Assistant:
+
+        uid = uuid.uuid4()
+
+        if not self._live:
+            raise TypeError("not a live session")
+
+        if self._exited():
+            raise ConnectionError("session has already exited")
+
+        data_dict = self.to_dict()
+        pth = os.path.join(self.command_dir, str(uid) + ".json.tmp")
+
+        with open(pth, "w") as f:
+            json.dump(data_dict, f)
+
+        final_pth = os.path.join(self.command_dir, str(uid) + ".json")
+        os.rename(pth, final_pth)
+
+        while not self._check_command_status(uid):
+            pass
+
+        save_path = os.path.join(self.response_dir, str(uid), "completion.json")
+        with open(save_path, "r") as f:
+            response = json.load(f)
+            a_mess: dict = response["message_list"][-1]["message"]
+
+        return _Assistant(a_mess["role"], a_mess["content"], a_mess.get("tool_calls"))
 
     def get_settings(self) -> dict:
         """
@@ -397,3 +441,6 @@ class _LLMOperations(Operation):
         command = _Assistant(role, content)
         self.append(command)
         return command
+
+    def add_response(self, com: _Assistant):
+        self.append(com)

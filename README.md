@@ -163,7 +163,7 @@ Initializing with arguments:
 from agent.config.command import _Sleep
 
 # Sleep for a specified duration
-sleep_command = _Sleep(seconds=5)
+sleep_command = _Sleep(ms=5)
 ```
 Initializing with a dictionary:
 

@@ -66,16 +66,15 @@ class Creator:
                           try_limit: int,
                           timeout: int,
                           max_tokens: int,
-                          llm_settings: list[LLMSettings],
-                          workflow_type: str) -> _LLMOperations:
+                          llm_settings: list[LLMSettings]) -> _LLMOperations:
 
         llm_op = _LLMOperations(
             try_limit,
             timeout,
             max_tokens,
             llm_settings,
-            workflow_type,
-            self._session_id
+            self._session_id,
+            live=self._live
         )
 
         self._operations.append(llm_op)
@@ -195,7 +194,6 @@ class Creator:
                     browser_opts.add_collect_nodes(
                         command["params"]["selector"],
                         command["params"]["snapshot_name"],
-                        command["params"]["wait_ready"],
                         command["params"]["recurse"],
                         command["params"]["prepopulate"],
                         command["params"]["get_styles"],

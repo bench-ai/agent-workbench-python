@@ -143,7 +143,9 @@ class LLMCommand(Command):
     Commands for LLM operations
     """
 
-    def __init__(self, message_type: str, message: dict[str, typing.Any]):
+    def __init__(self,
+                 message_type: str,
+                 message: dict[str, typing.Any]):
         """
         Initializes and LLM command
         :param message_type: type of llm messages
@@ -222,7 +224,7 @@ class _Assistant(LLMCommand):
     An Assistant LLM command, which represents an assistant response in a conversation with a user.
     """
 
-    def __init__(self, role: str, content: str):
+    def __init__(self, role: str, content: str, tool_calls=None):
         """
         Initialize an Assistant LLM command
 
@@ -231,7 +233,8 @@ class _Assistant(LLMCommand):
         """
         self.role = role
         self.content = content
-        super().__init__("assistant", {"role": self.role, "content": self.content})
+        super().__init__("assistant",
+                         {"role": self.role, "content": self.content, "tool_calls": tool_calls})
 
 
 # class Tool(LLMCommand):
@@ -349,12 +352,6 @@ class BrowserFile(BrowserCommand):
         :return: a boolean representing the file's existence
         """
 
-        err_path = os.path.join(get_save_path(), self._session, "err.txt")
-
-        if os.path.exists(err_path):
-            with open(err_path, "r") as f:
-                raise CommandError(f.read())
-
         return os.path.exists(self.file_path)
 
 
@@ -469,7 +466,6 @@ class _CollectNodes(BrowserFile):
     def __init__(self,
                  selector: str,
                  snapshot_name: str,
-                 wait_ready: bool,
                  session_name: str,
                  recurse: bool = True,
                  prepopulate: bool = True,
@@ -479,13 +475,11 @@ class _CollectNodes(BrowserFile):
 
         :param selector: The css selector that represents the section you want to extract
         :param snapshot_name: the folder to write the data to
-        :param wait_ready: whether to wait for the element to appear
         :param session_name: the name of the current session
         """
         super().__init__(
             "collect_nodes",
             {
-                "wait_ready": wait_ready,
                 "selector": selector,
                 "snapshot_name": snapshot_name,
                 "recurse": recurse,
@@ -497,7 +491,6 @@ class _CollectNodes(BrowserFile):
             session_name
         )
 
-        self.wait_ready = wait_ready
         self.selector = selector
 
     @property
@@ -525,7 +518,12 @@ class _SaveHtml(BrowserFile):
     Saves HTML to a file
     """
 
-    def __init__(self, session_name: str, snapshot_name: str):
+    def __init__(
+            self,
+            session_name: str,
+            snapshot_name: str,
+            selector="html"
+    ):
         """
         Initializes a CollectNodes command
 
@@ -534,8 +532,11 @@ class _SaveHtml(BrowserFile):
         """
         super().__init__(
             "save_html",
-            {"snapshot_name": snapshot_name},
-            "body.txt",
+            {
+                "snapshot_name": snapshot_name,
+                "selector": selector
+            },
+            "html.txt",
             snapshot_name,
             session_name=session_name
         )
@@ -552,15 +553,15 @@ class _Sleep(BrowserCommand):
     A command that instructs the browser to sleep for a duration
     """
 
-    def __init__(self, seconds: int):
+    def __init__(self, ms: int):
         """
         Initializes a Sleep command
 
-        :param seconds: The sleep duration
+        :param ms: The sleep duration
         """
-        super().__init__("sleep", {"seconds": seconds})
+        super().__init__("sleep", {"ms": ms})
 
-        self.seconds = seconds
+        self.seconds = ms
 
 
 class _Click(BrowserCommand):

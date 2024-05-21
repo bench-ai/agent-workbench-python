@@ -41,14 +41,16 @@ class Operation(list):
             live=False
     ):
         """
-        Initializes an Operation
+        initializes an Operation
 
         :param op_type: The type of all the commands
+        :param session_name: the name of the current session
         :param timeout: the max time the operation should run for
+        :param live: True means the operation is part of a live session
         """
 
-        if timeout and not 0 <= timeout <= 32767:
-            raise IndexError(f"timeout must be between 0 and 32767, got {timeout}")
+        # if timeout and not 0 <= timeout <= 32767:
+        #     raise IndexError(f"timeout must be between 0 and 32767, got {timeout}")
 
         super().__init__()
 
@@ -59,8 +61,7 @@ class Operation(list):
 
     def append(self, command: Command):
         """
-        Appends a command to the operation if the type is appropriate
-
+        appends a command to the operation if the type is appropriate
         :param command: The command to append
         """
         if command.command_type != self.op_type:
@@ -70,7 +71,7 @@ class Operation(list):
 
     def get_settings(self) -> dict:
         """
-        Gets the settings of the operations
+        gets the settings of the operations
 
         :return: The settings dict
         """
@@ -98,7 +99,31 @@ class Operation(list):
         """
         return json.dumps(self.to_dict())
 
+    def _started(self) -> bool:
+        """
+        True if the session has started (only applicable to live sessions). Useful because users may
+        try to send commands to a session before it even goes live.
+        :return:
+        """
+
+        pth = os.path.join(
+            get_live_session_path(self._session_name), "commands"
+        )
+
+        return os.path.isdir(pth)
+
     def _exited(self) -> bool:
+        """
+        :return: True if the session has ended
+        """
+        from .session import InvalidSessionError
+
+        if not self._live:
+            raise InvalidSessionError("session is not live, cannot check if session exited")
+
+        if not self._started():
+            raise InvalidSessionError("session has not started")
+
         pth = os.path.join(get_live_session_path(self._session_name), "exit.txt")
         return os.path.exists(pth)
 
@@ -265,6 +290,7 @@ class _BrowserOperations(Operation):
                          pause_time: int = 500,
                          snapshot_name: str = "snapshot",
                          image_quality=10):
+
         ic = _IterateHtml(super()._session_name,
                           iterate_limit,
                           save_html,
@@ -381,7 +407,6 @@ class _LLMOperations(Operation):
         :param max_tokens: the maximum number of words the user wants the model's response to be
         :param llm_settings: a list of LLMSettings objects defining the settings
             for the different LLMs the user wants the agent to switch between
-        :param workflow_type: the type of agentic workflow the user wants the agent to implement
         :param session_name: the name of the session
         """
         self.tools = tools

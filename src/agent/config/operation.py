@@ -1,7 +1,8 @@
 """
 This module handles processing operations which are sequences of commands
 """
-from tool_helper import get_function_info, convert_to_schema
+from . import tool_helper
+#from tool_helper import get_function_info, convert_to_schema
 import json
 import os
 import typing
@@ -404,8 +405,8 @@ class _LLMOperations(Operation):
     def __tool_to_schema_list(self, tools: list[typing.Callable]) -> None:
         tool_list = []
         for tool in tools:
-            tool_info = get_function_info(tool)
-            tool_json_string = convert_to_schema(tool_info)
+            tool_info = tool_helper.get_function_info(tool)
+            tool_json_string = tool_helper.convert_to_schema(tool_info)
             tool_list.append(tool_json_string)
         self.tools = tool_list
 

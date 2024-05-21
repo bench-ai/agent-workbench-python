@@ -129,5 +129,4 @@ def convert_to_schema(function_info):
             }
             json_schema['function']['parameters']['required'].append(param_name)
 
-    json_string = json.dumps(json_schema)
-    return json_string
+    return json_schema

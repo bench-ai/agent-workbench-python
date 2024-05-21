@@ -1,16 +1,74 @@
 
-# Agent Workbench Python Wrapper
+# Agent Workbench Python
 
-The Agent Workbench Python Wrapper is a Python package that provides a set of classes and methods for constructing agents tailored to specific tasks. This wrapper simplifies the process of building agents that interact with web browsers or language models by offering a convenient and easy-to-use interface.
+A python wrapper for the [Agent Workbench](https://github.com/bench-ai/agent-workbench.git) by Bench AI. The Agent workbench 
+helps you create browser automation scripts powered by LLMs. 
+
+Examples of things you can make using the Agent Workbench
+- Automatic Job Applier
+- Webscraping and data collection
+- Web testing
+
+
+## What we use it for
+- test websites for accessibility issues 
+- make website more accessible
+
+## How does it work?
+
+In the backend this code will send requests to the [Bench AI agent workbench](https://github.com/bench-ai/agent-workbench.git).
+Communication takes place through pub sub framework based on the existence of json files. The json files represent individual
+commands for the browser or LLM, or a sequence of commands.
+
+There are two modes you can run the workbench in. The first is live mode, live mode allows users to interact with the 
+browser dynamically, allocating new commands as the browser / LLM session is running. This mode is ideal when making
+bots.
+
+Regular mode requires the user to predetermine the commands they want to use. This mode is best for consistent repeatable
+actions, such as scraping manuals
+
+We provide two services. Browser and LLMs.
+- The browser lets users interact with the browser: you can click on elements, take screenshots, collect html ...
+- The LLM service, currently only works with open-ai, but will soon work with all major LLMs (anything on Olama, anthropic ...) We provide features such as 
+  - exponential backoff
+  - easy tool calling
+  - multimodal integration
+  - unified api
+
+## Design Choice Questions
+Why is the backend written in GO? 
+- In the future when we want to allow users to run multiple browser sessions in parallel
+using a framework that enables that like chromedp will show its efficacy.
+
+Will you provide resources to simplify creating agentic workflows?
+- Maybe right now we believe that need is fulfilled by other libraries
+
+## Requirements
+- Google Chrome
+- python 3.10
 
 ## Installation
-First you must install the agent workbench itself following the instructions from https://github.com/bench-ai/agent-workbench.git
-
 You can install the Agent Workbench Python Wrapper using pip:
 
-```bash
+### Nightly
+```shell
 pip install git https://github.com/bench-ai/agent-workbench-python.git
 ````
+
+### PyPi
+```shell
+# coming soon
+```
+
+### Build from source
+
+1) Install latest version of the [Bench AI agent workbench](https://github.com/bench-ai/agent-workbench.git) from source
+2) Install Poetry
+
+```shell
+git clone https://github.com/bench-ai/agent-workbench.git
+poetry install . # needed for testing
+```
 
 ## Usage
 

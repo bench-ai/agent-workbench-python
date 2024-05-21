@@ -24,7 +24,6 @@ from .command import (
     CommandError,
 )
 
-from .session import InvalidSessionError
 from ..miscellaneous.paths import get_live_session_path, get_save_path
 
 
@@ -49,8 +48,8 @@ class Operation(list):
         :param live: True means the operation is part of a live session
         """
 
-        if timeout and not 0 <= timeout <= 32767:
-            raise IndexError(f"timeout must be between 0 and 32767, got {timeout}")
+        # if timeout and not 0 <= timeout <= 32767:
+        #     raise IndexError(f"timeout must be between 0 and 32767, got {timeout}")
 
         super().__init__()
 
@@ -116,6 +115,8 @@ class Operation(list):
         """
         :return: True if the session has ended
         """
+        from .session import InvalidSessionError
+
         if not self._live:
             raise InvalidSessionError("session is not live, cannot check if session exited")
 

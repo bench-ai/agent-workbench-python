@@ -1,7 +1,7 @@
 """
 This module handles processing operations which are sequences of commands
 """
-
+from tool_helper import get_function_info, convert_to_schema
 import json
 import os
 import typing
@@ -364,6 +364,8 @@ class _LLMOperations(Operation):
             try_limit: int,
             timeout: int,
             max_tokens: int,
+            tools: typing.Union[list[typing.Callable], None],
+            tool_choice: typing.Union[str, None],
             llm_settings: list[LLMSettings],
             session_name: str,
             live: bool = False
@@ -381,14 +383,34 @@ class _LLMOperations(Operation):
         :param workflow_type: the type of agentic workflow the user wants the agent to implement
         :param session_name: the name of the session
         """
+        self.tools = tools
+        self.tool_choice = tool_choice
+        if tools is not None:
+            self.__tool_to_schema_list(tools)
+            if tool_choice is None:
+                self.tool_choice = "auto"
+
         super().__init__("llm", session_name, timeout, live=live)
         self.settings = {
             "try_limit": try_limit,
             "max_tokens": max_tokens,
             "llm_settings": llm_settings,
+            "tools": self.tools,
+            "tool_choice": self.tool_choice,
         }
 
         self._session_name = session_name
+
+    def __tool_to_schema_list(self, tools: list[typing.Callable]) -> None:
+        tool_list = []
+        for tool in tools:
+            tool_info = get_function_info(tool)
+            tool_json_string = convert_to_schema(tool_info)
+            tool_list.append(tool_json_string)
+        self.tools = tool_list
+
+    def add_tools(self, tools: list[typing.Callable]):
+        self.__tool_to_schema_list(tools)
 
     def execute(self) -> _Assistant:
 

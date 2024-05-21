@@ -237,31 +237,6 @@ class _Assistant(LLMCommand):
                          {"role": self.role, "content": self.content, "tool_calls": tool_calls})
 
 
-# class Tool(LLMCommand):
-#     """
-#     TODO
-#     A Tool LLM command
-#     """
-#
-#     def __init__(self, message: dict[str, typing.Any]):
-#         """
-#         Initialize a Tool LLM command
-#
-#         :param message: The tool message's data as a dictionary
-#         """
-#         super().__init__("tool", message)
-#
-#     @classmethod
-#     def init_from_dict(cls, command_dict: dict[str, typing.Any]):
-#         """
-#         loads Tool LLM command from a python dictionary
-#
-#         :param command_dict: the dictionary representation of the command
-#         :return: an Assistant LLM command object
-#         """
-#         return cls(command_dict["message"])
-
-
 # Browser Commands
 
 

@@ -1,5 +1,6 @@
 import json
 import os.path
+import typing
 import uuid
 from .operation import Operation, _BrowserOperations, _LLMOperations, LLMSettings
 from ..miscellaneous.paths import get_live_session_path
@@ -66,12 +67,16 @@ class Creator:
                           try_limit: int,
                           timeout: int,
                           max_tokens: int,
-                          llm_settings: list[LLMSettings]) -> _LLMOperations:
+                          llm_settings: list[LLMSettings],
+                          tools: list[typing.Callable] = None,
+                          tool_choice: str = None) -> _LLMOperations:
 
         llm_op = _LLMOperations(
             try_limit,
             timeout,
             max_tokens,
+            tools,
+            tool_choice,
             llm_settings,
             self._session_id,
             live=self._live
@@ -131,11 +136,13 @@ class Creator:
             try_limit=data_dict["settings"]["try_limit"],
             timeout=data_dict["settings"]["timeout"],
             max_tokens=data_dict["settings"]["max_tokens"],
+            tools=data_dict["settings"]["tools"],
+            tool_choice=data_dict["settings"]["tool_choice"],
             llm_settings=[
                 LLMSettings(**llm_setting)
                 for llm_setting in data_dict["settings"]["llm_settings"]
             ],
-            workflow_type=data_dict["settings"]["workflow"]["workflow_type"],
+            # workflow_type=data_dict["settings"]["workflow"]["workflow_type"],
             session_name=self._session_id
         )
 

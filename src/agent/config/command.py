@@ -233,8 +233,13 @@ class _Assistant(LLMCommand):
         """
         self.role = role
         self.content = content
+        self._tool_calls = tool_calls
         super().__init__("assistant",
                          {"role": self.role, "content": self.content, "tool_calls": tool_calls})
+
+    @property
+    def tool_calls(self):
+        return self._tool_calls
 
 
 # Browser Commands

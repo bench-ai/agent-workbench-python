@@ -2,7 +2,6 @@
 This module handles processing operations which are sequences of commands
 """
 from . import tool_helper
-#from tool_helper import get_function_info, convert_to_schema
 import json
 import os
 import typing
@@ -290,7 +289,6 @@ class _BrowserOperations(Operation):
                          pause_time: int = 500,
                          snapshot_name: str = "snapshot",
                          image_quality=10):
-
         ic = _IterateHtml(super()._session_name,
                           iterate_limit,
                           save_html,
@@ -409,23 +407,47 @@ class _LLMOperations(Operation):
             for the different LLMs the user wants the agent to switch between
         :param session_name: the name of the session
         """
-        self.tools = tools
+        self.tool_dict = {}
+        self.tools = []
         self.tool_choice = tool_choice
         if tools is not None:
             self.__tool_to_schema_list(tools)
-            if tool_choice is None:
-                self.tool_choice = "auto"
+            self.tool_dict = {tool.__name__: tool for tool in tools}
+        if self.tools and tool_choice is None:
+            self.tool_choice = "auto"
 
         super().__init__("llm", session_name, timeout, live=live)
         self.settings = {
             "try_limit": try_limit,
             "max_tokens": max_tokens,
             "llm_settings": llm_settings,
-            "tools": self.tools,
-            "tool_choice": self.tool_choice,
         }
+        if self.tools:
+            self.settings["tools"] = self.tools
+            self.settings["tool_choice"] = self.tool_choice
 
+        print(self.settings)
         self._session_name = session_name
+
+    def call_selected_func(self, assistant_message: _Assistant):
+        response_info = []
+        if assistant_message.tool_calls:
+
+            for tool_call in assistant_message.tool_calls:
+                tool_call_response = {"id": tool_call["id"],
+                                      "name": tool_call["function"]["name"],
+                                      "arguments": tool_call["function"]["arguments"]}
+                func = self.tool_dict.get(tool_call["function"]["name"])
+                if func:
+                    try:
+                        args: dict = json.loads(tool_call["function"]["arguments"])
+                    except json.JSONDecodeError as e:
+                        raise ValueError(f"failed to decode json {e}")
+                    func_response = func(**args)
+                    tool_call_response["response"] = func_response
+                    response_info.append(tool_call_response)
+
+        return response_info
 
     def __tool_to_schema_list(self, tools: list[typing.Callable]) -> None:
         tool_list = []
@@ -438,29 +460,33 @@ class _LLMOperations(Operation):
     def add_tools(self, tools: list[typing.Callable]):
         self.__tool_to_schema_list(tools)
 
-    def execute(self) -> _Assistant:
+    def collect_response(self) -> _Assistant:
 
-        uid = uuid.uuid4()
+        if self._live:
+            if self._exited():
+                raise ConnectionError("session has already exited")
 
-        if not self._live:
-            raise TypeError("not a live session")
+            uid = uuid.uuid4()
 
-        if self._exited():
-            raise ConnectionError("session has already exited")
+            data_dict = self.to_dict()
+            pth = os.path.join(self.command_dir, str(uid) + ".json.tmp")
 
-        data_dict = self.to_dict()
-        pth = os.path.join(self.command_dir, str(uid) + ".json.tmp")
+            with open(pth, "w") as f:
+                json.dump(data_dict, f)
 
-        with open(pth, "w") as f:
-            json.dump(data_dict, f)
+            final_pth = os.path.join(self.command_dir, str(uid) + ".json")
+            os.rename(pth, final_pth)
 
-        final_pth = os.path.join(self.command_dir, str(uid) + ".json")
-        os.rename(pth, final_pth)
+            while not self._check_command_status(uid):
+                pass
 
-        while not self._check_command_status(uid):
-            pass
+            save_path = os.path.join(self.response_dir, str(uid), "completion.json")
+        else:
+            save_path = os.path.join(get_save_path(), self._session_name, "completion.json")
 
-        save_path = os.path.join(self.response_dir, str(uid), "completion.json")
+        if not os.path.exists(save_path):
+            raise FileNotFoundError("the response does not exist")
+
         with open(save_path, "r") as f:
             response = json.load(f)
             a_mess: dict = response["message_list"][-1]["message"]

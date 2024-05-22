@@ -1,5 +1,6 @@
 import json
 import os.path
+import typing
 import uuid
 from .operation import Operation, _BrowserOperations, _LLMOperations, LLMSettings
 from ..miscellaneous.paths import get_live_session_path
@@ -21,7 +22,7 @@ class Session:
                  s_id: str | None = None,
                  live: bool = False,
                  headless: bool = False,
-                 session_lifetime=100_000,
+                 session_lifetime=32_766,
                  command_lifetime=5000):
 
         """
@@ -154,11 +155,15 @@ class Session:
     def new_llm_operation(self,
                           try_limit: int,
                           max_tokens: int,
-                          llm_settings: list[LLMSettings]) -> _LLMOperations:
+                          llm_settings: list[LLMSettings],
+                          tools: list[typing.Callable] = None,
+                          tool_choice: str = None) -> _LLMOperations:
 
         """
         Adds a LLM operation to the session. Allows users to send llm commands.
 
+        :param tool_choice: selector for tools
+        :param tools: list of tool functions
         :param try_limit: how many times we should retry the request using exponential backoff
         :param max_tokens: the max amount of tokens the model can output
         :param llm_settings: a list of LLMs to run the request on, it will start with the first LLM if that fails,
@@ -171,6 +176,8 @@ class Session:
                 try_limit,
                 self.command_lifetime,
                 max_tokens,
+                tools,
+                tool_choice,
                 llm_settings,
                 self._id,
                 live=self._live
@@ -180,6 +187,8 @@ class Session:
                 try_limit,
                 self._session_lifetime,
                 max_tokens,
+                tools,
+                tool_choice,
                 llm_settings,
                 self._id,
                 live=self._live

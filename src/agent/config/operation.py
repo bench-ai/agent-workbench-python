@@ -144,6 +144,9 @@ class Operation(list):
         return self._get_live_session_path("commands")
 
     def _response_session_path(self, uid: uuid.UUID):
+        if not self._live:
+            return self._session_name
+
         return self._session_name + "/" + "responses" + "/" + str(uid)
 
     def _check_command_status(self, uid: uuid.UUID):

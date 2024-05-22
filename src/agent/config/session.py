@@ -22,7 +22,7 @@ class Session:
                  s_id: str | None = None,
                  live: bool = False,
                  headless: bool = False,
-                 session_lifetime=32_766,
+                 session_lifetime=327_660,
                  command_lifetime=5000):
 
         """
@@ -46,7 +46,6 @@ class Session:
             raise ValueError("command_lifetime cannot be longer than session lifetime")
 
         self._command_lifetime = command_lifetime
-        self._session_lifetime = session_lifetime
         self._headless = headless
 
         self._id = ""

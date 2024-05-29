@@ -40,9 +40,9 @@ class Session:
         if command_lifetime < 0:
             raise ValueError("command_lifetime must be greater than 0ms, since command will never run")
 
-        self._session_lifetime = session_lifetime // 1000
+        self._session_lifetime = session_lifetime
 
-        if (self._session_lifetime * 1000) < command_lifetime:
+        if self._session_lifetime < command_lifetime:
             raise ValueError("command_lifetime cannot be longer than session lifetime")
 
         self._command_lifetime = command_lifetime
@@ -206,7 +206,7 @@ class Session:
         brow_op = _BrowserOperations(
             self._id,
             headless=self._headless,
-            timeout=self._session_lifetime,
+            timeout=self._session_lifetime // 1000,
             live=self._live)
 
         self._operations.append(brow_op)

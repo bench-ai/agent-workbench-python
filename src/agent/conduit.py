@@ -144,7 +144,7 @@ class LiveConduit:
         command_list = ["agent", "live"]
         command_list += ["-h"] if self._headless else []
         command_list += ["-life", str(self._config.command_lifetime)] if self._config.command_lifetime else []
-        command_list += [self._config.get_session_id(), str(self._session_lifetime)]
+        command_list += [self._config.get_session_id(), str(self._session_lifetime // 1000)]
 
         self.process = subprocess.Popen(
             command_list

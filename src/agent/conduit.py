@@ -134,53 +134,6 @@ class Conduit:
         return console_out.stdout
 
 
-class WebConduit:
-    """
-    Class based interface for the agent cli hosted on aws
-    """
-
-    def __init__(
-            self,
-            config: Session,
-            public_dns: str,
-            public_port: int
-    ):
-        """
-        :param config: the config object with all the execution details
-        :param public_dns: the public dns
-        :param public_port: the public port
-        """
-        self.config = config
-        self.base_url = f"http://{public_dns}:{public_port}"
-
-    def run(self, verbose=False) -> str:
-        """
-        Runs the config
-
-        :param verbose: Bool for if the stdout should be printed
-        :return: the stdout
-        """
-        url = f"{self.base_url}/run"
-
-        config_dict = self.config.to_dict()
-
-        with tempfile.NamedTemporaryFile(suffix=".json", mode="w+", delete=False) as tf:
-            json.dump(config_dict, tf)
-            tf.flush()
-            tf.close()
-
-        with open(tf.name, 'r') as config_file:
-            response = requests.post(url, files={'file': config_file})
-
-        if response.status_code != 200:
-            raise EnvironmentError(response.text)
-
-        if verbose:
-            print(response.text)
-
-        return response.text
-
-
 class LiveConduit:
 
     def __init__(self,

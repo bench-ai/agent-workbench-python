@@ -2,7 +2,6 @@
 This module is in charge of sending and executing commands through the Agent CLI
 """
 import json
-import requests
 import os
 import subprocess
 import tempfile

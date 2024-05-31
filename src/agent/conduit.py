@@ -109,6 +109,8 @@ class Conduit:
         :return: the stdout
         """
         command_list = ["agent", "run"]
+        if os.getenv("BENCHAI_AGENT_PATH"):
+            command_list = [os.getenv("BENCHAI_AGENT_PATH"), "run"]
 
         config_dict = self.config.to_dict()
 

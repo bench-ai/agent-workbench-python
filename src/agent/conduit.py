@@ -104,10 +104,12 @@ class Conduit:
         """
         Runs the config
 
-        :param verbose: prints the stdout
+        :param verbose: Bool for if the stdout should be printed
         :return: the stdout
         """
         command_list = ["agent", "run"]
+        if os.getenv("BENCHAI_AGENT_PATH"):
+            command_list = [os.getenv("BENCHAI_AGENT_PATH"), "run"]
 
         config_dict = self.config.to_dict()
 

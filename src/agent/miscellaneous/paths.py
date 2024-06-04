@@ -2,8 +2,8 @@ import os
 
 
 def get_save_path():
-    if os.getenv("BENCHAI-SAVEDIR"):
-        save_path = os.getenv("BENCHAI-SAVEDIR")
+    if os.getenv("BENCHAI_SAVEDIR"):
+        save_path = os.getenv("BENCHAI_SAVEDIR")
     else:
         save_path = os.path.join(os.path.expanduser("~"), ".cache", "benchai")
 
